@@ -8,9 +8,15 @@ html, body {
   color: #e0e0e0;
 }
 
+body {
+  position: relative;
+}
+
 .view {
   display: none;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 .view.active { display: flex; }
 
@@ -180,6 +186,8 @@ input[type="text"]:focus { border-color: #33ff66; }
   flex-direction: column;
   padding: 1rem;
   overflow-y: auto;
+  background: #0f0f23;
+  z-index: 2;
 }
 
 #lb-header {
