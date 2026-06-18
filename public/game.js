@@ -1,6 +1,7 @@
 (() => {
   const canvas = document.getElementById("game-canvas");
   const ctx = canvas.getContext("2d");
+  const gameArea = document.getElementById("game-area");
   const scoreEl = document.getElementById("current-score");
   const finalScoreEl = document.getElementById("final-score");
   const startScreen = document.getElementById("start-screen");
@@ -17,13 +18,28 @@
   const finalMode = document.getElementById("final-mode");
 
   const GRID = 20;
-  const CELL = canvas.width / GRID;
   const BASE_INTERVAL = 150;
   const MIN_INTERVAL = 60;
 
+  let CELL;
   let snake, dir, nextDir, food, score, gameLoop, running, mode;
 
   mode = "easy";
+
+  function sizeCanvas() {
+    const area = gameArea.getBoundingClientRect();
+    const size = Math.floor(Math.min(area.width, area.height) - 8);
+    const snapped = Math.floor(size / GRID) * GRID;
+    canvas.width = snapped;
+    canvas.height = snapped;
+    canvas.style.width = snapped + "px";
+    canvas.style.height = snapped + "px";
+    CELL = snapped / GRID;
+    if (snake) draw();
+  }
+
+  sizeCanvas();
+  window.addEventListener("resize", sizeCanvas);
 
   modeBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -158,6 +174,7 @@
   }
 
   function startGame() {
+    sizeCanvas();
     reset();
     overlay.style.display = "none";
     startScreen.hidden = true;
