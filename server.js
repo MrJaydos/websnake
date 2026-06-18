@@ -28,6 +28,10 @@ const insertScore = db.prepare(
   "INSERT INTO scores (name, score) VALUES (@name, @score)"
 );
 
+app.get("/healthz", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
 app.get("/api/scores", (_req, res) => {
   res.json(getScores.all());
 });
