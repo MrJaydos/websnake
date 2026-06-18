@@ -166,6 +166,15 @@ input[type="text"]:focus { border-color: #33ff66; }
 #score-form button { width: 100%; }
 #replay-btn { width: 100%; margin-top: 0.5rem; }
 
+.multi-link {
+  display: block;
+  margin-top: 0.6rem;
+  color: #888;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.multi-link:hover { color: #00ff41; }
+
 /* === LEADERBOARD PAGE === */
 #lb-page {
   padding: 1rem;

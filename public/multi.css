@@ -1,0 +1,62 @@
+#hud-left {
+  display: flex;
+  gap: 1rem;
+}
+
+.p1-color { color: #00ff41; }
+.p2-color { color: #00aaff; }
+
+#room-code {
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 0.4rem;
+  color: #00ff41;
+  margin: 0.5rem 0;
+  font-family: monospace;
+}
+
+.hint {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+#join-form {
+  margin-top: 1rem;
+  border-top: 1px solid #2a2a4a;
+  padding-top: 1rem;
+}
+
+#join-form p {
+  margin-bottom: 0.5rem;
+}
+
+#join-code {
+  text-transform: uppercase;
+  text-align: center;
+  font-size: 1.3rem;
+  letter-spacing: 0.3rem;
+  font-family: monospace;
+}
+
+#join-btn { width: 100%; }
+
+.secondary-btn {
+  background: none;
+  border: 1px solid #2a2a4a;
+  color: #888;
+  margin-top: 0.5rem;
+  width: 100%;
+}
+.secondary-btn:hover { border-color: #00ff41; color: #e0e0e0; }
+
+#rematch-btn { width: 100%; }
+
+#create-btn { width: 100%; margin-bottom: 0; }
+
+#lobby-screen .mode-btn { margin-bottom: 0; }
+
+#error-msg {
+  color: #ff4444;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}

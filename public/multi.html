@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Snake - Multiplayer</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="multi.css">
+</head>
+<body>
+  <div id="hud">
+    <div id="hud-left">
+      <span id="p1-score" class="p1-color">P1: 0</span>
+      <span id="p2-score" class="p2-color">P2: 0</span>
+    </div>
+    <div id="hud-right">
+      <a href="/" class="icon-btn" title="Solo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div id="game-area">
+    <canvas id="game-canvas"></canvas>
+    <div id="overlay">
+      <div id="lobby-screen" class="screen">
+        <h2>Multiplayer</h2>
+        <div id="mode-select">
+          <button class="mode-btn selected" data-mode="easy">Easy</button>
+          <button class="mode-btn" data-mode="hard">Hard</button>
+        </div>
+        <p id="mode-desc">Walls wrap around</p>
+        <button id="create-btn">Create Game</button>
+        <div id="join-form">
+          <p>Or join with a code:</p>
+          <input type="text" id="join-code" placeholder="Room code" maxlength="4" autocomplete="off">
+          <button id="join-btn">Join</button>
+        </div>
+      </div>
+      <div id="waiting-screen" class="screen" hidden>
+        <h2>Waiting for opponent</h2>
+        <p>Share this code:</p>
+        <div id="room-code"></div>
+        <p class="hint">They go to this page and enter the code</p>
+      </div>
+      <div id="gameover-screen" class="screen" hidden>
+        <h2 id="result-text"></h2>
+        <p><span class="p1-color">P1: <span id="final-p1">0</span></span> &nbsp; <span class="p2-color">P2: <span id="final-p2">0</span></span></p>
+        <button id="rematch-btn">Rematch</button>
+        <p id="rematch-status" hidden>Waiting for opponent...</p>
+        <button id="back-btn" class="secondary-btn">Back to Lobby</button>
+      </div>
+      <div id="disconnected-screen" class="screen" hidden>
+        <h2>Opponent Left</h2>
+        <button id="dc-back-btn">Back to Lobby</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="multi-game.js"></script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 const express = require("express");
+const http = require("http");
 const Database = require("better-sqlite3");
 const path = require("path");
+const multiplayer = require("./multiplayer");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -68,6 +70,9 @@ app.post("/api/scores", (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
+const server = http.createServer(app);
+multiplayer.attach(server);
+
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Snake game running on http://0.0.0.0:${PORT}`);
 });
