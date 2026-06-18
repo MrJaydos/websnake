@@ -14,6 +14,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     score INTEGER NOT NULL,
+    mode TEXT NOT NULL DEFAULT 'hard',
     created_at TEXT DEFAULT (datetime('now'))
   )
 `);
@@ -22,10 +23,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const getScores = db.prepare(
-  "SELECT name, score, created_at FROM scores ORDER BY score DESC LIMIT 20"
+  "SELECT name, score, mode, created_at FROM scores ORDER BY score DESC LIMIT 20"
 );
 const insertScore = db.prepare(
-  "INSERT INTO scores (name, score) VALUES (@name, @score)"
+  "INSERT INTO scores (name, score, mode) VALUES (@name, @score, @mode)"
 );
 
 app.get("/healthz", (_req, res) => {
@@ -37,7 +38,7 @@ app.get("/api/scores", (_req, res) => {
 });
 
 app.post("/api/scores", (req, res) => {
-  const { name, score } = req.body;
+  const { name, score, mode } = req.body;
   if (
     !name ||
     typeof name !== "string" ||
@@ -49,7 +50,8 @@ app.post("/api/scores", (req, res) => {
   if (!Number.isInteger(score) || score < 0) {
     return res.status(400).json({ error: "Score must be a non-negative integer" });
   }
-  insertScore.run({ name: name.trim(), score });
+  const validMode = mode === "easy" ? "easy" : "hard";
+  insertScore.run({ name: name.trim(), score, mode: validMode });
   res.json({ ok: true });
 });
 

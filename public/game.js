@@ -17,7 +17,21 @@
   const BASE_INTERVAL = 150;
   const MIN_INTERVAL = 60;
 
-  let snake, dir, nextDir, food, score, gameLoop, running;
+  let snake, dir, nextDir, food, score, gameLoop, running, mode;
+  const modeBtns = document.querySelectorAll(".mode-btn");
+  const modeDesc = document.getElementById("mode-desc");
+  const finalMode = document.getElementById("final-mode");
+
+  mode = "easy";
+
+  modeBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      modeBtns.forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      mode = btn.dataset.mode;
+      modeDesc.textContent = mode === "easy" ? "Walls wrap around" : "Walls kill you";
+    });
+  });
 
   function reset() {
     const mid = Math.floor(GRID / 2);
@@ -107,11 +121,14 @@
       y: snake[0].y + dir.y,
     };
 
-    if (
-      head.x < 0 || head.x >= GRID ||
-      head.y < 0 || head.y >= GRID ||
-      snake.some((s) => s.x === head.x && s.y === head.y)
-    ) {
+    if (mode === "easy") {
+      head.x = (head.x + GRID) % GRID;
+      head.y = (head.y + GRID) % GRID;
+    } else if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID) {
+      return gameOver();
+    }
+
+    if (snake.some((s) => s.x === head.x && s.y === head.y)) {
       return gameOver();
     }
 
@@ -139,6 +156,7 @@
     running = false;
     clearInterval(gameLoop);
     finalScoreEl.textContent = score;
+    finalMode.textContent = mode === "easy" ? "Easy" : "Hard";
     gameoverScreen.hidden = false;
     overlay.style.display = "flex";
     scoreForm.hidden = false;
@@ -216,7 +234,7 @@
       await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, score }),
+        body: JSON.stringify({ name, score, mode }),
       });
     } catch {
       // offline - ignore
@@ -236,12 +254,12 @@
       leaderboardBody.innerHTML = data
         .map(
           (row, i) =>
-            `<tr><td>${i + 1}</td><td>${escapeHtml(row.name)}</td><td>${row.score}</td></tr>`
+            `<tr><td>${i + 1}</td><td>${escapeHtml(row.name)}</td><td>${row.score}</td><td>${row.mode === "easy" ? "Easy" : "Hard"}</td></tr>`
         )
         .join("");
     } catch {
       leaderboardBody.innerHTML =
-        '<tr><td colspan="3">Could not load scores</td></tr>';
+        '<tr><td colspan="4">Could not load scores</td></tr>';
     }
   }
 

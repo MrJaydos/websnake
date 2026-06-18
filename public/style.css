@@ -93,6 +93,36 @@ button {
 
 button:hover { background: #33ff66; }
 
+#mode-select {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+
+.mode-btn {
+  background: #1a1a2e;
+  color: #888;
+  border: 1px solid #2a2a4a;
+  padding: 0.4rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.mode-btn:hover { background: #2a2a4a; color: #e0e0e0; }
+
+.mode-btn.selected {
+  background: #00ff41;
+  color: #0f0f23;
+  border-color: #00ff41;
+}
+
+#mode-desc {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 0.8rem;
+}
+
 input[type="text"] {
   background: #1a1a2e;
   border: 1px solid #00ff41;

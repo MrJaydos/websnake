@@ -19,11 +19,16 @@
         <div id="start-screen" class="screen">
           <h2>Snake</h2>
           <p>Use arrow keys or WASD to move<br>On mobile, swipe to change direction</p>
+          <div id="mode-select">
+            <button class="mode-btn selected" data-mode="easy">Easy</button>
+            <button class="mode-btn" data-mode="hard">Hard</button>
+          </div>
+          <p id="mode-desc">Walls wrap around</p>
           <button id="start-btn">Play</button>
         </div>
         <div id="gameover-screen" class="screen" hidden>
           <h2>Game Over</h2>
-          <p>Score: <span id="final-score">0</span></p>
+          <p>Score: <span id="final-score">0</span> (<span id="final-mode"></span>)</p>
           <form id="score-form">
             <input type="text" id="player-name" placeholder="Your name" maxlength="20" required autocomplete="off">
             <button type="submit">Submit Score</button>
@@ -36,7 +41,7 @@
     <div id="leaderboard">
       <h2>Leaderboard</h2>
       <table>
-        <thead><tr><th>#</th><th>Name</th><th>Score</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Mode</th></tr></thead>
         <tbody id="leaderboard-body"></tbody>
       </table>
     </div>
