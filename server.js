@@ -19,6 +19,13 @@ db.exec(`
   )
 `);
 
+const hasMode = db.prepare(
+  "SELECT COUNT(*) as cnt FROM pragma_table_info('scores') WHERE name = 'mode'"
+).get();
+if (hasMode.cnt === 0) {
+  db.exec("ALTER TABLE scores ADD COLUMN mode TEXT NOT NULL DEFAULT 'hard'");
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
