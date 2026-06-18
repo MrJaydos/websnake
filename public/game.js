@@ -27,8 +27,10 @@
   mode = "easy";
 
   function sizeCanvas() {
-    const area = gameArea.getBoundingClientRect();
-    const size = Math.floor(Math.min(area.width, area.height) - 8);
+    const hud = document.getElementById("hud");
+    const availW = window.innerWidth;
+    const availH = window.innerHeight - hud.offsetHeight;
+    const size = Math.min(availW, availH) - 8;
     const snapped = Math.floor(size / GRID) * GRID;
     canvas.width = snapped;
     canvas.height = snapped;
