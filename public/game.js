@@ -26,16 +26,27 @@
 
   mode = "easy";
 
+  const HUD_H = 36;
+
   function sizeCanvas() {
-    const hud = document.getElementById("hud");
-    const availW = window.innerWidth;
-    const availH = window.innerHeight - hud.offsetHeight;
-    const size = Math.min(availW, availH) - 8;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const availH = vh - HUD_H;
+    const size = Math.min(vw, availH);
     const snapped = Math.floor(size / GRID) * GRID;
+
     canvas.width = snapped;
     canvas.height = snapped;
     canvas.style.width = snapped + "px";
     canvas.style.height = snapped + "px";
+
+    const left = Math.floor((vw - snapped) / 2);
+    const top = HUD_H + Math.floor((availH - snapped) / 2);
+    gameArea.style.left = left + "px";
+    gameArea.style.top = top + "px";
+    gameArea.style.width = snapped + "px";
+    gameArea.style.height = snapped + "px";
+
     CELL = snapped / GRID;
     if (snake) draw();
   }
