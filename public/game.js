@@ -10,13 +10,8 @@
   const replayBtn = document.getElementById("replay-btn");
   const scoreForm = document.getElementById("score-form");
   const nameInput = document.getElementById("player-name");
-  const leaderboardBody = document.getElementById("leaderboard-body");
   const topScoreName = document.getElementById("top-score-name");
   const topScoreValue = document.getElementById("top-score-value");
-  const playView = document.getElementById("play-view");
-  const lbView = document.getElementById("lb-view");
-  const lbBtn = document.getElementById("lb-btn");
-  const lbBack = document.getElementById("lb-back");
   const modeBtns = document.querySelectorAll(".mode-btn");
   const modeDesc = document.getElementById("mode-desc");
   const finalMode = document.getElementById("final-mode");
@@ -38,19 +33,6 @@
       modeDesc.textContent = mode === "easy" ? "Walls wrap around" : "Walls kill you";
     });
   });
-
-  // view switching
-  function showView(view) {
-    playView.classList.remove("active");
-    lbView.classList.remove("active");
-    view.classList.add("active");
-  }
-
-  lbBtn.addEventListener("click", () => {
-    showView(lbView);
-    loadLeaderboard();
-  });
-  lbBack.addEventListener("click", () => showView(playView));
 
   function reset() {
     const mid = Math.floor(GRID / 2);
@@ -254,22 +236,6 @@
     loadTopScore();
   });
 
-  async function loadLeaderboard() {
-    try {
-      const res = await fetch("/api/scores");
-      const data = await res.json();
-      leaderboardBody.innerHTML = data
-        .map(
-          (row, i) =>
-            `<tr><td>${i + 1}</td><td>${escapeHtml(row.name)}</td><td>${row.score}</td><td>${row.mode === "easy" ? "Easy" : "Hard"}</td></tr>`
-        )
-        .join("");
-    } catch {
-      leaderboardBody.innerHTML =
-        '<tr><td colspan="4">Could not load scores</td></tr>';
-    }
-  }
-
   async function loadTopScore() {
     try {
       const res = await fetch("/api/scores");
@@ -281,12 +247,6 @@
     } catch {
       // ignore
     }
-  }
-
-  function escapeHtml(str) {
-    const d = document.createElement("div");
-    d.textContent = str;
-    return d.innerHTML;
   }
 
   loadTopScore();
