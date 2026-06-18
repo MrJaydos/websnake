@@ -49,6 +49,7 @@ canvas {
   border-radius: 4px;
   background: #1a1a2e;
   display: block;
+  touch-action: none;
 }
 
 #overlay {

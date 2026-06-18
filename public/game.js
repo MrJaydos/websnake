@@ -195,16 +195,18 @@
     e.preventDefault();
   });
 
-  // touch controls
+  // touch controls — prevent scrolling while playing
   let touchStart = null;
   canvas.addEventListener("touchstart", (e) => {
+    if (running) e.preventDefault();
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  }, { passive: true });
+  }, { passive: false });
 
-  canvas.addEventListener("touchend", (e) => {
+  canvas.addEventListener("touchmove", (e) => {
     if (!touchStart || !running) return;
-    const dx = e.changedTouches[0].clientX - touchStart.x;
-    const dy = e.changedTouches[0].clientY - touchStart.y;
+    e.preventDefault();
+    const dx = e.touches[0].clientX - touchStart.x;
+    const dy = e.touches[0].clientY - touchStart.y;
     if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
 
     let newDir;
@@ -216,8 +218,8 @@
     if (newDir.x + dir.x !== 0 || newDir.y + dir.y !== 0) {
       nextDir = newDir;
     }
-    touchStart = null;
-  }, { passive: true });
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: false });
 
   // buttons
   startBtn.addEventListener("click", startGame);
