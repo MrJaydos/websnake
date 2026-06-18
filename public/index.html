@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Snake</h1>
+      <div id="score-display">Score: <span id="current-score">0</span></div>
+    </header>
+
+    <div id="game-area">
+      <canvas id="game-canvas" width="400" height="400"></canvas>
+      <div id="overlay">
+        <div id="start-screen" class="screen">
+          <h2>Snake</h2>
+          <p>Use arrow keys or WASD to move<br>On mobile, swipe to change direction</p>
+          <button id="start-btn">Play</button>
+        </div>
+        <div id="gameover-screen" class="screen" hidden>
+          <h2>Game Over</h2>
+          <p>Score: <span id="final-score">0</span></p>
+          <form id="score-form">
+            <input type="text" id="player-name" placeholder="Your name" maxlength="20" required autocomplete="off">
+            <button type="submit">Submit Score</button>
+          </form>
+          <button id="replay-btn" hidden>Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="leaderboard">
+      <h2>Leaderboard</h2>
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th></tr></thead>
+        <tbody id="leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
