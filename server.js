@@ -27,7 +27,13 @@ if (hasMode.cnt === 0) {
 }
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "public"), {
+  etag: false,
+  lastModified: false,
+  setHeaders(res) {
+    res.set("Cache-Control", "no-cache, no-store, must-revalidate");
+  },
+}));
 
 const getScores = db.prepare(
   "SELECT name, score, mode, created_at FROM scores ORDER BY score DESC LIMIT 10"
