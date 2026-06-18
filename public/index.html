@@ -2,23 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Snake</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="app">
-    <header>
-      <h1>Snake</h1>
-      <div id="score-display">Score: <span id="current-score">0</span></div>
-    </header>
+  <!-- PLAY VIEW -->
+  <div id="play-view" class="view active">
+    <div id="hud">
+      <div id="hud-left">
+        <span id="current-score">0</span>
+      </div>
+      <div id="hud-right">
+        <div id="top-score-badge">
+          <span class="badge-label">#1</span>
+          <span id="top-score-name">---</span>
+          <span id="top-score-value">0</span>
+        </div>
+        <button id="lb-btn" class="icon-btn" title="Leaderboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="5" height="9"/><rect x="10" y="5" width="5" height="16"/><rect x="17" y="9" width="5" height="12"/></svg>
+        </button>
+      </div>
+    </div>
 
     <div id="game-area">
-      <canvas id="game-canvas" width="400" height="400"></canvas>
+      <canvas id="game-canvas" width="600" height="600"></canvas>
       <div id="overlay">
         <div id="start-screen" class="screen">
           <h2>Snake</h2>
-          <p>Use arrow keys or WASD to move<br>On mobile, swipe to change direction</p>
+          <p>Arrow keys / WASD or swipe</p>
           <div id="mode-select">
             <button class="mode-btn selected" data-mode="easy">Easy</button>
             <button class="mode-btn" data-mode="hard">Hard</button>
@@ -37,14 +49,20 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="leaderboard">
+  <!-- LEADERBOARD VIEW -->
+  <div id="lb-view" class="view">
+    <div id="lb-header">
+      <button id="lb-back" class="icon-btn" title="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
       <h2>Leaderboard</h2>
-      <table>
-        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Mode</th></tr></thead>
-        <tbody id="leaderboard-body"></tbody>
-      </table>
     </div>
+    <table>
+      <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Mode</th></tr></thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
   </div>
 
   <script src="game.js"></script>

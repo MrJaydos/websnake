@@ -30,7 +30,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const getScores = db.prepare(
-  "SELECT name, score, mode, created_at FROM scores ORDER BY score DESC LIMIT 20"
+  "SELECT name, score, mode, created_at FROM scores ORDER BY score DESC LIMIT 10"
 );
 const insertScore = db.prepare(
   "INSERT INTO scores (name, score, mode) VALUES (@name, @score, @mode)"

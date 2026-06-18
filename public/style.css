@@ -1,52 +1,88 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
+html, body {
+  height: 100%;
+  overflow: hidden;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: #0f0f23;
   color: #e0e0e0;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
 }
 
-#app {
-  max-width: 500px;
-  width: 100%;
-  padding: 1rem;
+.view {
+  display: none;
+  height: 100%;
+}
+.view.active { display: flex; }
+
+/* === PLAY VIEW === */
+#play-view {
+  flex-direction: column;
 }
 
-header {
+#hud {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  padding: 0.4rem 0.6rem;
+  flex-shrink: 0;
 }
 
-h1 {
-  font-size: 1.8rem;
+#hud-left {
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #00ff41;
-  text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
 }
 
-#score-display {
-  font-size: 1.2rem;
-  color: #00ff41;
-  font-weight: 600;
+#hud-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
+
+#top-score-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.badge-label {
+  color: #ffd700;
+  font-weight: 700;
+}
+
+#top-score-value {
+  color: #ffd700;
+}
+
+.icon-btn {
+  background: none;
+  border: 1px solid #2a2a4a;
+  color: #888;
+  padding: 0.3rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn:hover { color: #00ff41; border-color: #00ff41; }
 
 #game-area {
   position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  max-width: 400px;
-  margin: 0 auto 1.5rem;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
 }
 
 canvas {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: 1;
   border: 2px solid #00ff41;
-  border-radius: 4px;
   background: #1a1a2e;
   display: block;
   touch-action: none;
@@ -63,21 +99,23 @@ canvas {
 .screen {
   text-align: center;
   background: rgba(15, 15, 35, 0.95);
-  padding: 2rem;
+  padding: 1.5rem 2rem;
   border-radius: 8px;
   border: 1px solid #00ff41;
+  max-width: 90%;
 }
 
 .screen h2 {
   font-size: 1.6rem;
   color: #00ff41;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
 }
 
 .screen p {
-  margin-bottom: 1rem;
-  line-height: 1.5;
+  margin-bottom: 0.8rem;
+  line-height: 1.4;
   color: #aaa;
+  font-size: 0.9rem;
 }
 
 button {
@@ -91,14 +129,13 @@ button {
   cursor: pointer;
   transition: background 0.15s;
 }
-
 button:hover { background: #33ff66; }
 
 #mode-select {
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
 }
 
 .mode-btn {
@@ -109,9 +146,7 @@ button:hover { background: #33ff66; }
   font-size: 0.9rem;
   font-weight: 600;
 }
-
 .mode-btn:hover { background: #2a2a4a; color: #e0e0e0; }
-
 .mode-btn.selected {
   background: #00ff41;
   color: #0f0f23;
@@ -119,9 +154,9 @@ button:hover { background: #33ff66; }
 }
 
 #mode-desc {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #888;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
 }
 
 input[type="text"] {
@@ -135,31 +170,36 @@ input[type="text"] {
   margin-bottom: 0.8rem;
   outline: none;
 }
-
 input[type="text"]:focus { border-color: #33ff66; }
 
 #score-form button { width: 100%; }
-
 #replay-btn { width: 100%; margin-top: 0.5rem; }
 
-#leaderboard {
-  background: #1a1a2e;
-  border-radius: 8px;
+/* === LEADERBOARD VIEW === */
+#lb-view {
+  flex-direction: column;
   padding: 1rem;
-  border: 1px solid #2a2a4a;
+  overflow-y: auto;
 }
 
-#leaderboard h2 {
+#lb-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+#lb-header h2 {
   color: #00ff41;
-  margin-bottom: 0.8rem;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
 }
 
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; max-width: 500px; }
 
 thead th {
   text-align: left;
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.6rem;
   color: #888;
   font-size: 0.85rem;
   text-transform: uppercase;
@@ -167,17 +207,10 @@ thead th {
 }
 
 tbody td {
-  padding: 0.4rem 0.6rem;
+  padding: 0.5rem 0.6rem;
   border-bottom: 1px solid #1f1f3a;
 }
 
 tbody tr:first-child td { color: #ffd700; font-weight: 600; }
 tbody tr:nth-child(2) td { color: #c0c0c0; }
 tbody tr:nth-child(3) td { color: #cd7f32; }
-
-tbody tr:hover { background: rgba(0, 255, 65, 0.05); }
-
-@media (max-width: 440px) {
-  #app { padding: 0.5rem; }
-  h1 { font-size: 1.4rem; }
-}

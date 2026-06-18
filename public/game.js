@@ -11,6 +11,15 @@
   const scoreForm = document.getElementById("score-form");
   const nameInput = document.getElementById("player-name");
   const leaderboardBody = document.getElementById("leaderboard-body");
+  const topScoreName = document.getElementById("top-score-name");
+  const topScoreValue = document.getElementById("top-score-value");
+  const playView = document.getElementById("play-view");
+  const lbView = document.getElementById("lb-view");
+  const lbBtn = document.getElementById("lb-btn");
+  const lbBack = document.getElementById("lb-back");
+  const modeBtns = document.querySelectorAll(".mode-btn");
+  const modeDesc = document.getElementById("mode-desc");
+  const finalMode = document.getElementById("final-mode");
 
   const GRID = 20;
   const CELL = canvas.width / GRID;
@@ -18,9 +27,6 @@
   const MIN_INTERVAL = 60;
 
   let snake, dir, nextDir, food, score, gameLoop, running, mode;
-  const modeBtns = document.querySelectorAll(".mode-btn");
-  const modeDesc = document.getElementById("mode-desc");
-  const finalMode = document.getElementById("final-mode");
 
   mode = "easy";
 
@@ -32,6 +38,19 @@
       modeDesc.textContent = mode === "easy" ? "Walls wrap around" : "Walls kill you";
     });
   });
+
+  // view switching
+  function showView(view) {
+    playView.classList.remove("active");
+    lbView.classList.remove("active");
+    view.classList.add("active");
+  }
+
+  lbBtn.addEventListener("click", () => {
+    showView(lbView);
+    loadLeaderboard();
+  });
+  lbBack.addEventListener("click", () => showView(playView));
 
   function reset() {
     const mid = Math.floor(GRID / 2);
@@ -63,7 +82,6 @@
     ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // grid lines
     ctx.strokeStyle = "#1f1f3a";
     ctx.lineWidth = 0.5;
     for (let i = 0; i <= GRID; i++) {
@@ -77,7 +95,6 @@
       ctx.stroke();
     }
 
-    // food
     ctx.fillStyle = "#ff4444";
     ctx.shadowColor = "#ff4444";
     ctx.shadowBlur = 8;
@@ -92,19 +109,12 @@
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // snake
     snake.forEach((seg, i) => {
       const brightness = 1 - (i / snake.length) * 0.4;
       ctx.fillStyle = `rgba(0, 255, 65, ${brightness})`;
-      ctx.fillRect(
-        seg.x * CELL + 1,
-        seg.y * CELL + 1,
-        CELL - 2,
-        CELL - 2
-      );
+      ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2);
     });
 
-    // head highlight
     ctx.fillStyle = "#66ff88";
     ctx.fillRect(
       snake[0].x * CELL + 3,
@@ -175,7 +185,6 @@
     gameLoop = setInterval(tick, BASE_INTERVAL);
   }
 
-  // controls
   const KEY_MAP = {
     ArrowUp: { x: 0, y: -1 },
     ArrowDown: { x: 0, y: 1 },
@@ -195,7 +204,6 @@
     e.preventDefault();
   });
 
-  // touch controls — prevent scrolling while playing
   let touchStart = null;
   canvas.addEventListener("touchstart", (e) => {
     if (running) e.preventDefault();
@@ -221,11 +229,9 @@
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, { passive: false });
 
-  // buttons
   startBtn.addEventListener("click", startGame);
   replayBtn.addEventListener("click", startGame);
 
-  // score submission
   scoreForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = nameInput.value.trim();
@@ -239,16 +245,15 @@
         body: JSON.stringify({ name, score, mode }),
       });
     } catch {
-      // offline - ignore
+      // offline
     }
 
     scoreForm.hidden = true;
     replayBtn.hidden = false;
     replayBtn.focus();
-    loadLeaderboard();
+    loadTopScore();
   });
 
-  // leaderboard
   async function loadLeaderboard() {
     try {
       const res = await fetch("/api/scores");
@@ -265,11 +270,24 @@
     }
   }
 
+  async function loadTopScore() {
+    try {
+      const res = await fetch("/api/scores");
+      const data = await res.json();
+      if (data.length > 0) {
+        topScoreName.textContent = data[0].name;
+        topScoreValue.textContent = data[0].score;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   function escapeHtml(str) {
     const d = document.createElement("div");
     d.textContent = str;
     return d.innerHTML;
   }
 
-  loadLeaderboard();
+  loadTopScore();
 })();
