@@ -5,6 +5,146 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leaderboard - Snake</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      overflow: auto;
+    }
+
+    #lb-page {
+      width: 100%;
+      max-width: 640px;
+      padding: 1.5rem;
+    }
+
+    #lb-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #lb-header h2 {
+      color: #00ff41;
+      font-size: 1.5rem;
+      flex: 1;
+    }
+
+    #lb-nav {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    #lb-nav a {
+      color: #888;
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.8rem;
+      border: 1px solid #2a2a4a;
+      border-radius: 4px;
+    }
+    #lb-nav a:hover { color: #00ff41; border-color: #00ff41; }
+
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid #2a2a4a;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.7rem 1.5rem;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn:hover { color: #e0e0e0; }
+    .tab-btn.active {
+      color: #00ff41;
+      border-bottom-color: #00ff41;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 0.7rem 0.8rem;
+      color: #666;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #2a2a4a;
+    }
+
+    tbody td {
+      padding: 0.7rem 0.8rem;
+      border-bottom: 1px solid #1a1a2e;
+      font-size: 0.95rem;
+    }
+
+    tbody tr {
+      transition: background 0.1s;
+    }
+    tbody tr:hover {
+      background: rgba(0, 255, 65, 0.04);
+    }
+
+    .rank-cell {
+      width: 2.5rem;
+      font-weight: 700;
+      color: #555;
+    }
+
+    tbody tr:nth-child(1) .rank-cell { color: #ffd700; }
+    tbody tr:nth-child(2) .rank-cell { color: #c0c0c0; }
+    tbody tr:nth-child(3) .rank-cell { color: #cd7f32; }
+
+    tbody tr:nth-child(1) td { color: #ffd700; font-weight: 600; }
+    tbody tr:nth-child(2) td { color: #c0c0c0; }
+    tbody tr:nth-child(3) td { color: #cd7f32; }
+
+    .score-cell {
+      font-family: monospace;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .mode-cell {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .result-win { color: #00ff41; }
+    .result-lose { color: #ff4444; }
+    .result-draw { color: #ffd700; }
+
+    .empty-state {
+      text-align: center;
+      color: #555;
+      padding: 3rem 1rem;
+      font-size: 0.95rem;
+    }
+
+    @media (min-width: 600px) {
+      #lb-page { padding: 2rem 2.5rem; }
+      thead th { padding: 0.8rem 1rem; }
+      tbody td { padding: 0.8rem 1rem; }
+    }
+  </style>
 </head>
 <body>
   <div id="lb-page">
@@ -13,31 +153,102 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </a>
       <h2>Leaderboard</h2>
+      <div id="lb-nav">
+        <a href="/">Solo</a>
+        <a href="/multi.html">Multiplayer</a>
+      </div>
     </div>
-    <table>
-      <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Mode</th></tr></thead>
-      <tbody id="leaderboard-body"></tbody>
-    </table>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="solo">Solo</button>
+      <button class="tab-btn" data-tab="multi">Multiplayer</button>
+    </div>
+
+    <div id="tab-solo" class="tab-content active">
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Mode</th></tr></thead>
+        <tbody id="solo-body"></tbody>
+      </table>
+    </div>
+
+    <div id="tab-multi" class="tab-content">
+      <table>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Mode</th></tr></thead>
+        <tbody id="multi-body"></tbody>
+      </table>
+    </div>
   </div>
 
   <script>
-    (async () => {
-      const tbody = document.getElementById("leaderboard-body");
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const tabContents = document.querySelectorAll(".tab-content");
+
+    tabBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach((b) => b.classList.remove("active"));
+        tabContents.forEach((c) => c.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    function escapeHtml(str) {
+      const d = document.createElement("div");
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    async function loadSolo() {
+      const tbody = document.getElementById("solo-body");
       try {
         const res = await fetch("/api/scores");
         const data = await res.json();
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No scores yet. Go play!</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data
+          .map((row, i) => `<tr>
+            <td class="rank-cell">${i + 1}</td>
+            <td>${escapeHtml(row.name)}</td>
+            <td class="score-cell">${row.score}</td>
+            <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
+          </tr>`)
+          .join("");
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Could not load scores</td></tr>';
+      }
+    }
+
+    async function loadMulti() {
+      const tbody = document.getElementById("multi-body");
+      try {
+        const res = await fetch("/api/multi-scores");
+        const data = await res.json();
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No multiplayer scores yet</td></tr>';
+          return;
+        }
         tbody.innerHTML = data
           .map((row, i) => {
-            const d = document.createElement("div");
-            d.textContent = row.name;
-            const safe = d.innerHTML;
-            return `<tr><td>${i + 1}</td><td>${safe}</td><td>${row.score}</td><td>${row.mode === "easy" ? "Easy" : "Hard"}</td></tr>`;
+            const resultClass = "result-" + row.result;
+            const resultLabel = row.result.charAt(0).toUpperCase() + row.result.slice(1);
+            return `<tr>
+              <td class="rank-cell">${i + 1}</td>
+              <td>${escapeHtml(row.name)}</td>
+              <td class="score-cell">${row.score}</td>
+              <td class="${resultClass}">${resultLabel}</td>
+              <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
+            </tr>`;
           })
           .join("");
       } catch {
-        tbody.innerHTML = '<tr><td colspan="4">Could not load scores</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Could not load scores</td></tr>';
       }
-    })();
+    }
+
+    loadSolo();
+    loadMulti();
   </script>
 </body>
 </html>

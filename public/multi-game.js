@@ -22,6 +22,8 @@
   const p2ScoreEl = document.getElementById("p2-score");
   const modeBtns = document.querySelectorAll(".mode-btn");
   const modeDesc = document.getElementById("mode-desc");
+  const multiScoreForm = document.getElementById("multi-score-form");
+  const multiNameInput = document.getElementById("multi-player-name");
 
   const GRID = 20;
   const HUD_H = 36;
@@ -35,6 +37,8 @@
   let myNum = 0;
   let gameState = null;
   let mode = "easy";
+  let lastResult = null;
+  let lastMyScore = 0;
 
   modeBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -130,14 +134,24 @@
           const me = msg.players.find((p) => p.num === myNum);
           const them = msg.players.find((p) => p.num !== myNum);
           if (me && them) {
-            if (!me.alive && !them.alive) resultText.textContent = "Draw!";
-            else if (me.alive) resultText.textContent = "You Win!";
-            else resultText.textContent = "You Lose";
+            if (!me.alive && !them.alive) {
+              resultText.textContent = "Draw!";
+              lastResult = "draw";
+            } else if (me.alive) {
+              resultText.textContent = "You Win!";
+              lastResult = "win";
+            } else {
+              resultText.textContent = "You Lose";
+              lastResult = "lose";
+            }
+            lastMyScore = me.score;
           }
           finalP1.textContent = p1 ? p1.score : 0;
           finalP2.textContent = p2 ? p2.score : 0;
-          rematchBtn.hidden = false;
+          multiScoreForm.hidden = false;
+          rematchBtn.hidden = true;
           rematchStatus.hidden = true;
+          multiNameInput.value = localStorage.getItem("snakeName") || "";
           showScreen(gameoverScreen);
         }
 
@@ -176,6 +190,24 @@
     ws.addEventListener("open", () => {
       ws.send(JSON.stringify({ type: "join", code }));
     });
+  });
+
+  multiScoreForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = multiNameInput.value.trim();
+    if (!name) return;
+    localStorage.setItem("snakeName", name);
+
+    try {
+      await fetch("/api/multi-scores", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, score: lastMyScore, result: lastResult, mode }),
+      });
+    } catch {}
+
+    multiScoreForm.hidden = true;
+    rematchBtn.hidden = false;
   });
 
   rematchBtn.addEventListener("click", () => {

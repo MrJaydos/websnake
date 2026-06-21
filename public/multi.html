@@ -14,6 +14,9 @@
       <span id="p2-score" class="p2-color">P2: 0</span>
     </div>
     <div id="hud-right">
+      <a href="/leaderboard.html" class="icon-btn" title="Leaderboard">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="5" height="9"/><rect x="10" y="5" width="5" height="16"/><rect x="17" y="9" width="5" height="12"/></svg>
+      </a>
       <a href="/" class="icon-btn" title="Solo">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </a>
@@ -36,6 +39,7 @@
           <input type="text" id="join-code" placeholder="Room code" maxlength="4" autocomplete="off">
           <button id="join-btn">Join</button>
         </div>
+        <a href="/" class="multi-link">Solo Mode</a>
       </div>
       <div id="waiting-screen" class="screen" hidden>
         <h2>Waiting for opponent</h2>
@@ -46,7 +50,11 @@
       <div id="gameover-screen" class="screen" hidden>
         <h2 id="result-text"></h2>
         <p><span class="p1-color">P1: <span id="final-p1">0</span></span> &nbsp; <span class="p2-color">P2: <span id="final-p2">0</span></span></p>
-        <button id="rematch-btn">Rematch</button>
+        <form id="multi-score-form">
+          <input type="text" id="multi-player-name" placeholder="Your name" maxlength="20" required autocomplete="off">
+          <button type="submit">Submit Score</button>
+        </form>
+        <button id="rematch-btn" hidden>Rematch</button>
         <p id="rematch-status" hidden>Waiting for opponent...</p>
         <button id="back-btn" class="secondary-btn">Back to Lobby</button>
       </div>

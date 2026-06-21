@@ -49,6 +49,7 @@
 }
 .secondary-btn:hover { border-color: #00ff41; color: #e0e0e0; }
 
+#multi-score-form button { width: 100%; }
 #rematch-btn { width: 100%; }
 
 #create-btn { width: 100%; margin-bottom: 0; }
