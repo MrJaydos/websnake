@@ -237,10 +237,8 @@ function attach(server) {
           room.players.forEach((p) => (p.rematch = false));
           startGame(room);
         } else {
-          for (const p of room.players) {
-            if (p.ws && p.ws.readyState === 1) {
-              p.ws.send(JSON.stringify({ type: "rematch_wait" }));
-            }
+          if (player.ws && player.ws.readyState === 1) {
+            player.ws.send(JSON.stringify({ type: "rematch_wait" }));
           }
         }
       }
