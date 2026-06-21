@@ -27,6 +27,8 @@
   const HUD_H = 36;
   const P1_COLOR = "#00ff41";
   const P2_COLOR = "#00aaff";
+  const dpad = document.getElementById("dpad");
+  const isTouchDevice = matchMedia("(pointer: coarse)").matches;
 
   let CELL;
   let ws = null;
@@ -43,10 +45,16 @@
     });
   });
 
+  function getDpadH() {
+    if (!isTouchDevice) return 0;
+    return dpad.offsetHeight || 180;
+  }
+
   function sizeCanvas() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const availH = vh - HUD_H;
+    const dpadH = getDpadH();
+    const availH = vh - HUD_H - dpadH;
     const size = Math.min(vw, availH);
     const snapped = Math.floor(size / GRID) * GRID;
     canvas.width = snapped;
@@ -302,4 +310,26 @@
     }
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, { passive: false });
+
+  // d-pad buttons
+  const DPAD_MAP = {
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+  };
+
+  function vibrate() {
+    if (navigator.vibrate) navigator.vibrate(15);
+  }
+
+  document.querySelectorAll(".dpad-btn").forEach((btn) => {
+    btn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      const dir = DPAD_MAP[btn.dataset.dir];
+      if (!dir || !ws || ws.readyState !== 1) return;
+      ws.send(JSON.stringify({ type: "dir", dir }));
+      vibrate();
+    }, { passive: false });
+  });
 })();

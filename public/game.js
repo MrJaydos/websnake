@@ -27,11 +27,19 @@
   mode = "easy";
 
   const HUD_H = 36;
+  const dpad = document.getElementById("dpad");
+  const isTouchDevice = matchMedia("(pointer: coarse)").matches;
+
+  function getDpadH() {
+    if (!isTouchDevice) return 0;
+    return dpad.offsetHeight || 180;
+  }
 
   function sizeCanvas() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const availH = vh - HUD_H;
+    const dpadH = getDpadH();
+    const availH = vh - HUD_H - dpadH;
     const size = Math.min(vw, availH);
     const snapped = Math.floor(size / GRID) * GRID;
 
@@ -240,6 +248,29 @@
     }
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, { passive: false });
+
+  // d-pad buttons
+  const DPAD_MAP = {
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 },
+  };
+
+  function vibrate() {
+    if (navigator.vibrate) navigator.vibrate(15);
+  }
+
+  document.querySelectorAll(".dpad-btn").forEach((btn) => {
+    btn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      const newDir = DPAD_MAP[btn.dataset.dir];
+      if (!newDir || !running) return;
+      if (newDir.x + dir.x === 0 && newDir.y + dir.y === 0) return;
+      nextDir = newDir;
+      vibrate();
+    }, { passive: false });
+  });
 
   startBtn.addEventListener("click", startGame);
   replayBtn.addEventListener("click", startGame);
