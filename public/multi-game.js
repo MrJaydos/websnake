@@ -39,6 +39,7 @@
   let mode = "easy";
   let lastResult = null;
   let lastMyScore = 0;
+  let lastDuration = 0;
 
   modeBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -145,6 +146,7 @@
               lastResult = "lose";
             }
             lastMyScore = me.score;
+            lastDuration = msg.duration || 0;
           }
           finalP1.textContent = p1 ? p1.score : 0;
           finalP2.textContent = p2 ? p2.score : 0;
@@ -202,7 +204,7 @@
       await fetch("/api/multi-scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, score: lastMyScore, result: lastResult, mode }),
+        body: JSON.stringify({ name, score: lastMyScore, result: lastResult, mode, duration: lastDuration }),
       });
     } catch {}
 

@@ -143,6 +143,7 @@ function getState(room) {
     foods: room.foods,
     state: room.state,
     mode: room.mode,
+    duration: room.startedAt ? Math.floor((Date.now() - room.startedAt) / 1000) : 0,
   };
 }
 
@@ -167,6 +168,7 @@ function startGame(room) {
   room.foods = [];
   placeAllFood(room);
   room.tickMs = TICK_MS;
+  room.startedAt = Date.now();
 
   broadcast(room);
 

@@ -132,6 +132,12 @@
     .result-lose { color: #ff4444; }
     .result-draw { color: #ffd700; }
 
+    .time-cell {
+      font-size: 0.8rem;
+      color: #555;
+      white-space: nowrap;
+    }
+
     .empty-state {
       text-align: center;
       color: #555;
@@ -166,14 +172,14 @@
 
     <div id="tab-solo" class="tab-content active">
       <table>
-        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Mode</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Mode</th><th>Time</th></tr></thead>
         <tbody id="solo-body"></tbody>
       </table>
     </div>
 
     <div id="tab-multi" class="tab-content">
       <table>
-        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Mode</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Mode</th><th>Time</th></tr></thead>
         <tbody id="multi-body"></tbody>
       </table>
     </div>
@@ -198,13 +204,20 @@
       return d.innerHTML;
     }
 
+    function formatDuration(secs) {
+      if (!secs) return "-";
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return m > 0 ? m + "m " + s + "s" : s + "s";
+    }
+
     async function loadSolo() {
       const tbody = document.getElementById("solo-body");
       try {
         const res = await fetch("/api/scores");
         const data = await res.json();
         if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No scores yet. Go play!</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No scores yet. Go play!</td></tr>';
           return;
         }
         tbody.innerHTML = data
@@ -213,10 +226,11 @@
             <td>${escapeHtml(row.name)}</td>
             <td class="score-cell">${row.score}</td>
             <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
+            <td class="time-cell">${formatDuration(row.duration)}</td>
           </tr>`)
           .join("");
       } catch {
-        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Could not load scores</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Could not load scores</td></tr>';
       }
     }
 
@@ -226,7 +240,7 @@
         const res = await fetch("/api/multi-scores");
         const data = await res.json();
         if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No multiplayer scores yet</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No multiplayer scores yet</td></tr>';
           return;
         }
         tbody.innerHTML = data
@@ -239,11 +253,12 @@
               <td class="score-cell">${row.score}</td>
               <td class="${resultClass}">${resultLabel}</td>
               <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
+              <td class="time-cell">${formatDuration(row.duration)}</td>
             </tr>`;
           })
           .join("");
       } catch {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Could not load scores</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Could not load scores</td></tr>';
       }
     }
 

@@ -22,7 +22,7 @@
   const MIN_INTERVAL = 60;
 
   let CELL;
-  let snake, dir, nextDir, food, score, gameLoop, running, mode;
+  let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration;
 
   mode = "easy";
 
@@ -181,9 +181,17 @@
     gameLoop = setInterval(tick, interval);
   }
 
+  function formatDuration(ms) {
+    const secs = Math.floor(ms / 1000);
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m > 0 ? m + "m " + s + "s" : s + "s";
+  }
+
   function gameOver() {
     running = false;
     clearInterval(gameLoop);
+    gameDuration = Date.now() - startTime;
     finalScoreEl.textContent = score;
     finalMode.textContent = mode === "easy" ? "Easy" : "Hard";
     gameoverScreen.hidden = false;
@@ -201,6 +209,7 @@
     startScreen.hidden = true;
     gameoverScreen.hidden = true;
     running = true;
+    startTime = Date.now();
     draw();
     gameLoop = setInterval(tick, BASE_INTERVAL);
   }
@@ -290,7 +299,7 @@
       await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, score, mode }),
+        body: JSON.stringify({ name, score, mode, duration: Math.floor(gameDuration / 1000) }),
       });
     } catch {
       // offline

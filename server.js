@@ -17,6 +17,7 @@ db.exec(`
     name TEXT NOT NULL,
     score INTEGER NOT NULL,
     mode TEXT NOT NULL DEFAULT 'hard',
+    duration INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
   )
 `);
@@ -28,6 +29,13 @@ if (hasMode.cnt === 0) {
   db.exec("ALTER TABLE scores ADD COLUMN mode TEXT NOT NULL DEFAULT 'hard'");
 }
 
+const hasDuration = db.prepare(
+  "SELECT COUNT(*) as cnt FROM pragma_table_info('scores') WHERE name = 'duration'"
+).get();
+if (hasDuration.cnt === 0) {
+  db.exec("ALTER TABLE scores ADD COLUMN duration INTEGER NOT NULL DEFAULT 0");
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS multi_scores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,9 +43,17 @@ db.exec(`
     score INTEGER NOT NULL,
     result TEXT NOT NULL,
     mode TEXT NOT NULL DEFAULT 'easy',
+    duration INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
   )
 `);
+
+const hasMultiDuration = db.prepare(
+  "SELECT COUNT(*) as cnt FROM pragma_table_info('multi_scores') WHERE name = 'duration'"
+).get();
+if (hasMultiDuration.cnt === 0) {
+  db.exec("ALTER TABLE multi_scores ADD COLUMN duration INTEGER NOT NULL DEFAULT 0");
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public"), {
@@ -49,17 +65,17 @@ app.use(express.static(path.join(__dirname, "public"), {
 }));
 
 const getScores = db.prepare(
-  "SELECT name, score, mode, created_at FROM scores ORDER BY score DESC LIMIT 10"
+  "SELECT name, score, mode, duration FROM scores ORDER BY score DESC LIMIT 10"
 );
 const insertScore = db.prepare(
-  "INSERT INTO scores (name, score, mode) VALUES (@name, @score, @mode)"
+  "INSERT INTO scores (name, score, mode, duration) VALUES (@name, @score, @mode, @duration)"
 );
 
 const getMultiScores = db.prepare(
-  "SELECT name, score, result, mode, created_at FROM multi_scores ORDER BY score DESC LIMIT 10"
+  "SELECT name, score, result, mode, duration FROM multi_scores ORDER BY score DESC LIMIT 10"
 );
 const insertMultiScore = db.prepare(
-  "INSERT INTO multi_scores (name, score, result, mode) VALUES (@name, @score, @result, @mode)"
+  "INSERT INTO multi_scores (name, score, result, mode, duration) VALUES (@name, @score, @result, @mode, @duration)"
 );
 
 app.get("/healthz", (_req, res) => {
@@ -71,7 +87,7 @@ app.get("/api/scores", (_req, res) => {
 });
 
 app.post("/api/scores", (req, res) => {
-  const { name, score, mode } = req.body;
+  const { name, score, mode, duration } = req.body;
   if (
     !name ||
     typeof name !== "string" ||
@@ -84,7 +100,8 @@ app.post("/api/scores", (req, res) => {
     return res.status(400).json({ error: "Score must be a non-negative integer" });
   }
   const validMode = mode === "easy" ? "easy" : "hard";
-  insertScore.run({ name: name.trim(), score, mode: validMode });
+  const validDuration = Number.isInteger(duration) && duration >= 0 ? duration : 0;
+  insertScore.run({ name: name.trim(), score, mode: validMode, duration: validDuration });
   res.json({ ok: true });
 });
 
@@ -93,7 +110,7 @@ app.get("/api/multi-scores", (_req, res) => {
 });
 
 app.post("/api/multi-scores", (req, res) => {
-  const { name, score, result, mode } = req.body;
+  const { name, score, result, mode, duration } = req.body;
   if (
     !name ||
     typeof name !== "string" ||
@@ -107,7 +124,8 @@ app.post("/api/multi-scores", (req, res) => {
   }
   const validMode = mode === "easy" ? "easy" : "hard";
   const validResult = ["win", "lose", "draw"].includes(result) ? result : "lose";
-  insertMultiScore.run({ name: name.trim(), score, result: validResult, mode: validMode });
+  const validDuration = Number.isInteger(duration) && duration >= 0 ? duration : 0;
+  insertMultiScore.run({ name: name.trim(), score, result: validResult, mode: validMode, duration: validDuration });
   res.json({ ok: true });
 });
 
