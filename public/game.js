@@ -262,14 +262,19 @@
   }
 
   document.querySelectorAll(".dpad-btn").forEach((btn) => {
-    btn.addEventListener("touchstart", (e) => {
+    function handlePress(e) {
       e.preventDefault();
+      e.stopPropagation();
       const newDir = DPAD_MAP[btn.dataset.dir];
       if (!newDir || !running) return;
       if (newDir.x + dir.x === 0 && newDir.y + dir.y === 0) return;
       nextDir = newDir;
       vibrate();
-    }, { passive: false });
+      btn.classList.add("pressed");
+      setTimeout(() => btn.classList.remove("pressed"), 100);
+    }
+    btn.addEventListener("pointerdown", handlePress, { passive: false });
+    btn.addEventListener("contextmenu", (e) => e.preventDefault());
   });
 
   startBtn.addEventListener("click", startGame);

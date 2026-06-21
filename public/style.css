@@ -186,6 +186,7 @@ input[type="text"]:focus { border-color: #33ff66; }
   align-items: center;
   padding-bottom: env(safe-area-inset-bottom, 8px);
   z-index: 10;
+  touch-action: none;
 }
 
 .dpad-row {
@@ -195,8 +196,8 @@ input[type="text"]:focus { border-color: #33ff66; }
 }
 
 .dpad-btn {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   border-radius: 12px;
   background: rgba(0, 255, 65, 0.12);
   border: 1px solid rgba(0, 255, 65, 0.3);
@@ -206,18 +207,20 @@ input[type="text"]:focus { border-color: #33ff66; }
   justify-content: center;
   padding: 0;
   margin: 2px;
-  touch-action: manipulation;
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
   user-select: none;
 }
 
-.dpad-btn:active {
-  background: rgba(0, 255, 65, 0.3);
+.dpad-btn:active, .dpad-btn.pressed {
+  background: rgba(0, 255, 65, 0.4);
+  border-color: rgba(0, 255, 65, 0.6);
 }
 
 .dpad-spacer {
-  width: 56px;
-  height: 56px;
+  width: 64px;
+  height: 64px;
   margin: 2px;
 }
 

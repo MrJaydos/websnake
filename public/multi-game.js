@@ -324,12 +324,17 @@
   }
 
   document.querySelectorAll(".dpad-btn").forEach((btn) => {
-    btn.addEventListener("touchstart", (e) => {
+    function handlePress(e) {
       e.preventDefault();
-      const dir = DPAD_MAP[btn.dataset.dir];
-      if (!dir || !ws || ws.readyState !== 1) return;
-      ws.send(JSON.stringify({ type: "dir", dir }));
+      e.stopPropagation();
+      const d = DPAD_MAP[btn.dataset.dir];
+      if (!d || !ws || ws.readyState !== 1) return;
+      ws.send(JSON.stringify({ type: "dir", dir: d }));
       vibrate();
-    }, { passive: false });
+      btn.classList.add("pressed");
+      setTimeout(() => btn.classList.remove("pressed"), 100);
+    }
+    btn.addEventListener("pointerdown", handlePress, { passive: false });
+    btn.addEventListener("contextmenu", (e) => e.preventDefault());
   });
 })();
