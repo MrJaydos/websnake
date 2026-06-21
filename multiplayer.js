@@ -16,27 +16,34 @@ function initSnake(playerNum) {
   if (playerNum === 1) {
     return [
       { x: 4, y: mid },
-      { x: 3, y: mid },
-      { x: 2, y: mid },
+      { x: 4, y: mid + 1 },
+      { x: 4, y: mid + 2 },
     ];
   }
   return [
     { x: GRID - 5, y: mid },
-    { x: GRID - 4, y: mid },
-    { x: GRID - 3, y: mid },
+    { x: GRID - 5, y: mid + 1 },
+    { x: GRID - 5, y: mid + 2 },
   ];
 }
 
-function placeFood(room) {
+function placeOneFood(room) {
   const occupied = new Set();
   for (const p of room.players) {
     for (const s of p.snake) occupied.add(`${s.x},${s.y}`);
   }
+  for (const f of room.foods) occupied.add(`${f.x},${f.y}`);
   let pos;
   do {
     pos = { x: Math.floor(Math.random() * GRID), y: Math.floor(Math.random() * GRID) };
   } while (occupied.has(`${pos.x},${pos.y}`));
-  room.food = pos;
+  return pos;
+}
+
+function placeAllFood(room) {
+  room.foods = [];
+  room.foods.push(placeOneFood(room));
+  room.foods.push(placeOneFood(room));
 }
 
 function tick(room) {
@@ -90,23 +97,25 @@ function tick(room) {
   }
 
   // apply moves
+  let ate = false;
   for (const p of room.players) {
     if (!p.alive || !p.pendingHead) continue;
     p.snake.unshift(p.pendingHead);
 
-    if (p.pendingHead.x === room.food.x && p.pendingHead.y === room.food.y) {
+    const eatenIdx = room.foods.findIndex(
+      (f) => f.x === p.pendingHead.x && f.y === p.pendingHead.y
+    );
+    if (eatenIdx !== -1) {
       p.score += 10;
-      room.needFood = true;
+      room.foods[eatenIdx] = placeOneFood(room);
+      ate = true;
     } else {
       p.snake.pop();
     }
     p.pendingHead = null;
   }
 
-  if (room.needFood) {
-    placeFood(room);
-    room.needFood = false;
-
+  if (ate) {
     const maxLen = Math.max(...room.players.map((p) => p.snake.length));
     room.tickMs = Math.max(MIN_TICK, TICK_MS - maxLen * 3);
   }
@@ -131,7 +140,7 @@ function getState(room) {
       alive: p.alive,
       dir: p.dir,
     })),
-    food: room.food,
+    foods: room.foods,
     state: room.state,
     mode: room.mode,
   };
@@ -149,15 +158,15 @@ function startGame(room) {
   for (let i = 0; i < room.players.length; i++) {
     const p = room.players[i];
     p.snake = initSnake(i + 1);
-    p.dir = i === 0 ? { x: 1, y: 0 } : { x: -1, y: 0 };
-    p.nextDir = { ...p.dir };
+    p.dir = { x: 0, y: -1 };
+    p.nextDir = { x: 0, y: -1 };
     p.score = 0;
     p.alive = true;
     p.pendingHead = null;
   }
-  placeFood(room);
+  room.foods = [];
+  placeAllFood(room);
   room.tickMs = TICK_MS;
-  room.needFood = false;
 
   broadcast(room);
 
@@ -192,12 +201,11 @@ function attach(server) {
           mode,
           state: "waiting",
           players: [],
-          food: null,
+          foods: [],
           interval: null,
           tickMs: TICK_MS,
-          needFood: false,
         };
-        player = { num: 1, ws, snake: [], dir: { x: 1, y: 0 }, nextDir: { x: 1, y: 0 }, score: 0, alive: true, pendingHead: null };
+        player = { num: 1, ws, snake: [], dir: { x: 0, y: -1 }, nextDir: { x: 0, y: -1 }, score: 0, alive: true, pendingHead: null };
         room.players.push(player);
         rooms.set(code, room);
         ws.send(JSON.stringify({ type: "created", code, playerNum: 1 }));
@@ -210,7 +218,7 @@ function attach(server) {
           ws.send(JSON.stringify({ type: "error", message: "Room not found or full" }));
           return;
         }
-        player = { num: 2, ws, snake: [], dir: { x: -1, y: 0 }, nextDir: { x: -1, y: 0 }, score: 0, alive: true, pendingHead: null };
+        player = { num: 2, ws, snake: [], dir: { x: 0, y: -1 }, nextDir: { x: 0, y: -1 }, score: 0, alive: true, pendingHead: null };
         room.players.push(player);
         ws.send(JSON.stringify({ type: "joined", code, playerNum: 2 }));
         startGame(room);

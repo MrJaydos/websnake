@@ -216,14 +216,15 @@
     }
 
     // food
-    if (gameState.food) {
+    const foods = gameState.foods || [];
+    for (const f of foods) {
       ctx.fillStyle = "#ff4444";
       ctx.shadowColor = "#ff4444";
       ctx.shadowBlur = 8;
       ctx.beginPath();
       ctx.arc(
-        gameState.food.x * CELL + CELL / 2,
-        gameState.food.y * CELL + CELL / 2,
+        f.x * CELL + CELL / 2,
+        f.y * CELL + CELL / 2,
         CELL / 2 - 2,
         0,
         Math.PI * 2
