@@ -84,27 +84,23 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      table-layout: fixed;
     }
 
     thead th {
       text-align: left;
-      padding: 0.5rem 0.4rem;
+      padding: 0.5rem 0.6rem;
       color: #666;
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.03em;
       border-bottom: 1px solid #2a2a4a;
       white-space: nowrap;
-      overflow: hidden;
     }
 
     tbody td {
-      padding: 0.5rem 0.4rem;
+      padding: 0.5rem 0.6rem;
       border-bottom: 1px solid #1a1a2e;
-      font-size: 0.85rem;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size: 0.9rem;
       white-space: nowrap;
     }
 
@@ -129,10 +125,26 @@
     tbody tr:nth-child(2) td { color: #c0c0c0; }
     tbody tr:nth-child(3) td { color: #cd7f32; }
 
+    .name-cell {
+      max-width: 0;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .score-cell {
       font-family: monospace;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       font-weight: 700;
+    }
+
+    .score-detail {
+      display: none;
+      font-family: inherit;
+      font-weight: 400;
+      font-size: 0.7rem;
+      color: #666;
+      margin-left: 0.3rem;
     }
 
     .mode-cell {
@@ -155,6 +167,8 @@
       color: #555;
       white-space: nowrap;
     }
+
+    .hide-mobile { }
 
     .empty-state {
       text-align: center;
@@ -188,6 +202,11 @@
     #admin-toggle:hover { border-color: #ff4444; color: #ff4444; }
     #admin-toggle.active { border-color: #ff4444; color: #ff4444; }
 
+    @media (max-width: 599px) {
+      .hide-mobile { display: none; }
+      .score-detail { display: inline; }
+    }
+
     @media (min-width: 600px) {
       #lb-page { padding: 2rem 2.5rem; }
       thead th { padding: 0.8rem 1rem; }
@@ -216,14 +235,14 @@
 
     <div id="tab-solo" class="tab-content active">
       <table>
-        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Fruits</th><th>Mode</th><th>Time</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th><th class="hide-mobile">Fruits</th><th class="hide-mobile">Mode</th><th class="hide-mobile">Time</th></tr></thead>
         <tbody id="solo-body"></tbody>
       </table>
     </div>
 
     <div id="tab-multi" class="tab-content">
       <table>
-        <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Result</th><th>Mode</th><th>Time</th></tr></thead>
+        <thead><tr><th>#</th><th>Name</th><th>Score</th><th class="hide-mobile">Result</th><th class="hide-mobile">Mode</th><th class="hide-mobile">Time</th></tr></thead>
         <tbody id="multi-body"></tbody>
       </table>
     </div>
@@ -303,15 +322,19 @@
           return;
         }
         tbody.innerHTML = data
-          .map((row, i) => `<tr>
+          .map((row, i) => {
+            const mode = row.mode === "easy" ? "Easy" : "Hard";
+            const fruits = row.fruits || 0;
+            return `<tr>
             <td class="rank-cell">${i + 1}</td>
-            <td>${escapeHtml(row.name)}</td>
-            <td class="score-cell">${row.score}</td>
-            <td class="fruits-cell">${row.fruits || 0}</td>
-            <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
-            <td class="time-cell">${formatDuration(row.duration)}</td>
+            <td class="name-cell">${escapeHtml(row.name)}</td>
+            <td class="score-cell">${row.score}<span class="score-detail">${mode} · ${fruits}f</span></td>
+            <td class="fruits-cell hide-mobile">${fruits}</td>
+            <td class="mode-cell hide-mobile">${mode}</td>
+            <td class="time-cell hide-mobile">${formatDuration(row.duration)}</td>
             <td><button class="del-btn" onclick="deleteEntry('scores',${row.id})">X</button></td>
-          </tr>`)
+          </tr>`;
+          })
           .join("");
       } catch {
         tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Could not load scores</td></tr>';
@@ -331,13 +354,14 @@
           .map((row, i) => {
             const resultClass = "result-" + row.result;
             const resultLabel = row.result.charAt(0).toUpperCase() + row.result.slice(1);
+            const mode = row.mode === "easy" ? "Easy" : "Hard";
             return `<tr>
               <td class="rank-cell">${i + 1}</td>
-              <td>${escapeHtml(row.name)}</td>
-              <td class="score-cell">${row.score}</td>
-              <td class="${resultClass}">${resultLabel}</td>
-              <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
-              <td class="time-cell">${formatDuration(row.duration)}</td>
+              <td class="name-cell">${escapeHtml(row.name)}</td>
+              <td class="score-cell">${row.score}<span class="score-detail">${mode} · ${resultLabel}</span></td>
+              <td class="${resultClass} hide-mobile">${resultLabel}</td>
+              <td class="mode-cell hide-mobile">${mode}</td>
+              <td class="time-cell hide-mobile">${formatDuration(row.duration)}</td>
               <td><button class="del-btn" onclick="deleteEntry('multi-scores',${row.id})">X</button></td>
             </tr>`;
           })
