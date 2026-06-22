@@ -293,6 +293,37 @@ canvas.star-active {
   animation: starBorder 0.5s linear infinite;
 }
 
+/* === PAUSE === */
+#pause-btn {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+#resume-btn {
+  width: 100%;
+  font-size: 1.1rem;
+}
+
+/* === PERSONAL BEST === */
+#hud-center {
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 600;
+}
+
+/* === SHARE BUTTON === */
+#share-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  background: #1a1a2e;
+  color: #00ff41;
+  border: 1px solid #00ff41;
+}
+#share-btn:hover {
+  background: #2a2a4a;
+}
+
 /* === LEADERBOARD PAGE === */
 #lb-page {
   padding: 1rem;

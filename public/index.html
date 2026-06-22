@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Snake</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#00ff41">
 </head>
 <body>
   <div id="new-high-score" hidden>NEW #1!</div>
@@ -13,12 +15,16 @@
       <span id="current-score">0</span>
       <span id="speed-indicator" style="font-size:0.75rem;color:#888;margin-left:0.4rem">Speed: 1x</span>
     </div>
+    <div id="hud-center">
+      <span id="personal-best">PB: 0</span>
+    </div>
     <div id="hud-right">
       <div id="top-score-badge">
         <span class="badge-label">#1</span>
         <span id="top-score-name">---</span>
         <span id="top-score-value">0</span>
       </div>
+      <button id="pause-btn" class="icon-btn" title="Pause">| |</button>
       <a href="/leaderboard.html" class="icon-btn" title="Leaderboard">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="5" height="9"/><rect x="10" y="5" width="5" height="16"/><rect x="17" y="9" width="5" height="12"/></svg>
       </a>
@@ -47,6 +53,10 @@
         <button id="start-btn">Play</button>
         <a href="/multi.html" class="multi-link">Multiplayer</a>
       </div>
+      <div id="pause-screen" class="screen" hidden>
+        <h2>Paused</h2>
+        <button id="resume-btn">Resume</button>
+      </div>
       <div id="gameover-screen" class="screen" hidden>
         <h2>Game Over</h2>
         <p>Score: <span id="final-score">0</span> (<span id="final-mode"></span>)</p>
@@ -54,6 +64,7 @@
           <input type="text" id="player-name" placeholder="Your name" maxlength="20" required autocomplete="off">
           <button type="submit">Submit Score</button>
         </form>
+        <button id="share-btn" hidden>Share</button>
         <button id="replay-btn" hidden>Play Again</button>
       </div>
     </div>
@@ -81,6 +92,7 @@
     </div>
   </div>
 
+  <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js");</script>
   <script src="game.js"></script>
 </body>
 </html>

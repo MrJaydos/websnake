@@ -19,11 +19,17 @@
   const speedIndicator = document.getElementById("speed-indicator");
   const newHighScoreEl = document.getElementById("new-high-score");
   const colorBtns = document.querySelectorAll(".color-btn");
+  const pauseBtn = document.getElementById("pause-btn");
+  const pauseScreen = document.getElementById("pause-screen");
+  const resumeBtn = document.getElementById("resume-btn");
+  const shareBtn = document.getElementById("share-btn");
+  const pbEl = document.getElementById("personal-best");
 
   const GRID = 20;
   const BASE_INTERVAL = 150;
   const MIN_INTERVAL = 60;
   const STAR_DURATION = 6000;
+  const COMBO_WINDOW = 20;
 
   let CELL;
   let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration;
@@ -34,6 +40,15 @@
   let snakeColor = localStorage.getItem("snakeColor") || "#00ff41";
   let currentInterval = BASE_INTERVAL;
   let topScore = 0;
+  let paused = false;
+  let pausedAt = 0;
+  let pausedElapsed = 0;
+
+  // combo state
+  let combo = 0;
+  let lastFoodTick = -999;
+  let comboText = null;
+  let comboTextTime = 0;
 
   // star power-up state
   let star = null;
@@ -44,7 +59,28 @@
   let starAudioCtx = null;
   let starOscillators = [];
 
+  // timer remaining values for pause/resume
+  let superFruitRemaining = 0;
+  let starPickupRemaining = 0;
+  let starActiveRemaining = 0;
+
   mode = "easy";
+
+  function getPersonalBest() {
+    return parseInt(localStorage.getItem(`snakePB_${mode}`) || "0", 10);
+  }
+
+  function setPersonalBest(val) {
+    localStorage.setItem(`snakePB_${mode}`, val);
+    updatePBDisplay();
+  }
+
+  function updatePBDisplay() {
+    const pb = getPersonalBest();
+    pbEl.textContent = `PB: ${pb}`;
+  }
+
+  updatePBDisplay();
 
   // color picker
   colorBtns.forEach((btn) => {
@@ -102,6 +138,7 @@
       btn.classList.add("selected");
       mode = btn.dataset.mode;
       modeDesc.textContent = mode === "easy" ? "Walls wrap around" : "Walls kill you";
+      updatePBDisplay();
     });
   });
 
@@ -121,6 +158,12 @@
     deactivateStar();
     tickCount = 0;
     currentInterval = BASE_INTERVAL;
+    paused = false;
+    pausedAt = 0;
+    pausedElapsed = 0;
+    combo = 0;
+    lastFoodTick = -999;
+    comboText = null;
     updateSpeedDisplay();
     placeFood();
   }
@@ -208,13 +251,15 @@
     starTimer = null;
   }
 
+  let starActiveTimer = null;
+
   function activateStar() {
     starActive = true;
     starEndTime = Date.now() + STAR_DURATION;
     canvas.classList.add("star-active");
     playStarMusic();
     if (!animFrame) animFrame = requestAnimationFrame(animateEffects);
-    setTimeout(() => {
+    starActiveTimer = setTimeout(() => {
       deactivateStar();
       draw();
     }, STAR_DURATION);
@@ -222,6 +267,8 @@
 
   function deactivateStar() {
     starActive = false;
+    if (starActiveTimer) clearTimeout(starActiveTimer);
+    starActiveTimer = null;
     canvas.classList.remove("star-active");
     stopStarMusic();
   }
@@ -295,6 +342,13 @@
       head: `rgb(${Math.min(255, r + 60)}, ${Math.min(255, g + 60)}, ${Math.min(255, b + 60)})`,
       r, g, b,
     };
+  }
+
+  function getComboMultiplier() {
+    if (combo >= 5) return 3;
+    if (combo >= 3) return 2;
+    if (combo >= 2) return 1.5;
+    return 1;
   }
 
   function draw() {
@@ -372,7 +426,6 @@
       ctx.shadowColor = `hsl(${starHue}, 100%, 65%)`;
       ctx.shadowBlur = 15;
 
-      // draw star shape
       const cx = star.x * CELL + CELL / 2;
       const cy = star.y * CELL + CELL / 2;
       const outerR = CELL / 2 - 1;
@@ -428,6 +481,22 @@
       ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
       ctx.fillRect(0, canvas.height - barH, canvas.width * pct, barH);
     }
+
+    // combo text
+    if (comboText) {
+      const age = Date.now() - comboTextTime;
+      if (age < 1000) {
+        const alpha = 1 - age / 1000;
+        const rise = age / 1000 * 30;
+        ctx.font = `bold ${Math.round(CELL * 0.8)}px sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+        ctx.fillText(comboText, canvas.width / 2, canvas.height / 2 - rise);
+      } else {
+        comboText = null;
+      }
+    }
   }
 
   function tick() {
@@ -444,7 +513,6 @@
       return gameOver();
     }
 
-    // self collision — skip during star mode
     if (!starActive && snake.some((s) => s.x === head.x && s.y === head.y)) {
       return gameOver();
     }
@@ -452,12 +520,26 @@
     snake.unshift(head);
 
     if (head.x === food.x && head.y === food.y) {
-      score += 10;
+      if (tickCount - lastFoodTick <= COMBO_WINDOW) {
+        combo++;
+      } else {
+        combo = 1;
+      }
+      lastFoodTick = tickCount;
+      const mult = getComboMultiplier();
+      const pts = Math.round(10 * mult);
+      score += pts;
       scoreEl.textContent = score;
+      if (combo >= 2) {
+        comboText = `${combo}x COMBO!`;
+        comboTextTime = Date.now();
+        if (!animFrame) animFrame = requestAnimationFrame(animateEffects);
+      }
       placeFood();
       updateSpeed();
     } else if (superFruit && head.x === superFruit.x && head.y === superFruit.y) {
-      score += 50;
+      const mult = getComboMultiplier();
+      score += Math.round(50 * mult);
       scoreEl.textContent = score;
       clearSuperFruit();
     } else if (star && head.x === star.x && head.y === star.y) {
@@ -482,7 +564,7 @@
 
   let animFrame = null;
   function animateEffects() {
-    if ((superFruit || star || starActive) && running) {
+    if ((superFruit || star || starActive || comboText) && running && !paused) {
       draw();
       animFrame = requestAnimationFrame(animateEffects);
     } else {
@@ -517,11 +599,95 @@
     setTimeout(() => { newHighScoreEl.hidden = true; }, 2000);
   }
 
+  // pause / resume
+  function pauseGame() {
+    if (!running || paused) return;
+    paused = true;
+    pausedAt = Date.now();
+    clearInterval(gameLoop);
+
+    if (superFruitTimer) {
+      superFruitRemaining = Math.max(0, 5000 - (Date.now() - superFruitSpawnedAt));
+      clearTimeout(superFruitTimer);
+      superFruitTimer = null;
+    }
+    if (starTimer) {
+      starPickupRemaining = Math.max(0, 7000 - (Date.now() - starSpawnedAt));
+      clearTimeout(starTimer);
+      starTimer = null;
+    }
+    if (starActiveTimer && starActive) {
+      starActiveRemaining = Math.max(0, starEndTime - Date.now());
+      clearTimeout(starActiveTimer);
+      starActiveTimer = null;
+      stopStarMusic();
+    }
+
+    if (animFrame) {
+      cancelAnimationFrame(animFrame);
+      animFrame = null;
+    }
+
+    pauseScreen.hidden = false;
+    overlay.style.display = "flex";
+    pauseBtn.textContent = "||";
+  }
+
+  function resumeGame() {
+    if (!paused) return;
+    const elapsed = Date.now() - pausedAt;
+    pausedElapsed += elapsed;
+    paused = false;
+
+    pauseScreen.hidden = true;
+    overlay.style.display = "none";
+
+    if (superFruit && superFruitRemaining > 0) {
+      superFruitSpawnedAt = Date.now() - (5000 - superFruitRemaining);
+      superFruitTimer = setTimeout(() => {
+        superFruit = null;
+        superFruitTimer = null;
+        draw();
+      }, superFruitRemaining);
+    }
+    if (star && starPickupRemaining > 0) {
+      starSpawnedAt = Date.now() - (7000 - starPickupRemaining);
+      starTimer = setTimeout(() => {
+        star = null;
+        starTimer = null;
+        draw();
+      }, starPickupRemaining);
+    }
+    if (starActive && starActiveRemaining > 0) {
+      starEndTime = Date.now() + starActiveRemaining;
+      playStarMusic();
+      starActiveTimer = setTimeout(() => {
+        deactivateStar();
+        draw();
+      }, starActiveRemaining);
+    }
+
+    gameLoop = setInterval(tick, currentInterval);
+    if (superFruit || star || starActive || comboText) {
+      animFrame = requestAnimationFrame(animateEffects);
+    }
+  }
+
+  pauseBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (!running) return;
+    if (paused) resumeGame(); else pauseGame();
+  });
+
+  resumeBtn.addEventListener("click", () => {
+    resumeGame();
+  });
+
   function gameOver() {
     running = false;
     clearInterval(gameLoop);
     deactivateStar();
-    gameDuration = Date.now() - startTime;
+    gameDuration = Date.now() - startTime - pausedElapsed;
     finalScoreEl.textContent = score;
     finalMode.textContent = mode === "easy" ? "Easy" : "Hard";
 
@@ -529,10 +695,16 @@
       showNewHighScore();
     }
 
+    const pb = getPersonalBest();
+    if (score > pb) {
+      setPersonalBest(score);
+    }
+
     gameoverScreen.hidden = false;
     overlay.style.display = "flex";
     scoreForm.hidden = false;
     replayBtn.hidden = true;
+    shareBtn.hidden = false;
     nameInput.value = localStorage.getItem("snakeName") || "";
     nameInput.focus();
   }
@@ -543,11 +715,29 @@
     overlay.style.display = "none";
     startScreen.hidden = true;
     gameoverScreen.hidden = true;
+    pauseScreen.hidden = true;
     running = true;
     startTime = Date.now();
     draw();
     gameLoop = setInterval(tick, BASE_INTERVAL);
   }
+
+  // share
+  shareBtn.addEventListener("click", async () => {
+    const modeLabel = mode === "easy" ? "Easy" : "Hard";
+    const text = `I scored ${score} on Snake (${modeLabel})! Can you beat it?`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "Snake", text });
+      } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        shareBtn.textContent = "Copied!";
+        setTimeout(() => { shareBtn.textContent = "Share"; }, 1500);
+      } catch {}
+    }
+  });
 
   const KEY_MAP = {
     ArrowUp: { x: 0, y: -1 },
@@ -561,8 +751,15 @@
   };
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" || e.key === " ") {
+      if (running) {
+        e.preventDefault();
+        if (paused) resumeGame(); else pauseGame();
+      }
+      return;
+    }
     const newDir = KEY_MAP[e.key];
-    if (!newDir || !running) return;
+    if (!newDir || !running || paused) return;
     if (newDir.x + dir.x === 0 && newDir.y + dir.y === 0) return;
     nextDir = newDir;
     e.preventDefault();
@@ -575,7 +772,7 @@
   }, { passive: false });
 
   canvas.addEventListener("touchmove", (e) => {
-    if (!touchStart || !running) return;
+    if (!touchStart || !running || paused) return;
     e.preventDefault();
     const dx = e.touches[0].clientX - touchStart.x;
     const dy = e.touches[0].clientY - touchStart.y;
@@ -610,7 +807,7 @@
       e.preventDefault();
       e.stopPropagation();
       const newDir = DPAD_MAP[btn.dataset.dir];
-      if (!newDir || !running) return;
+      if (!newDir || !running || paused) return;
       if (newDir.x + dir.x === 0 && newDir.y + dir.y === 0) return;
       nextDir = newDir;
       vibrate();
