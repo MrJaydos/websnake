@@ -180,7 +180,7 @@
     });
   });
 
-  const HUD_H = 36;
+  const hud = document.getElementById("hud");
   const dpad = document.getElementById("dpad");
   const isTouchDevice = matchMedia("(pointer: coarse)").matches;
 
@@ -193,7 +193,8 @@
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const dpadH = getDpadH();
-    const availH = vh - HUD_H - dpadH;
+    const hudH = hud.offsetHeight;
+    const availH = vh - hudH - dpadH;
     const size = Math.min(vw, availH);
     const snapped = Math.floor(size / GRID) * GRID;
 
@@ -203,7 +204,7 @@
     canvas.style.height = snapped + "px";
 
     const left = Math.floor((vw - snapped) / 2);
-    const top = HUD_H + Math.floor((availH - snapped) / 2);
+    const top = hudH + Math.floor((availH - snapped) / 2);
     gameArea.style.left = left + "px";
     gameArea.style.top = top + "px";
     gameArea.style.width = snapped + "px";

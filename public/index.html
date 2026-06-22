@@ -11,19 +11,19 @@
 <body>
   <div id="new-high-score" hidden>NEW #1!</div>
   <div id="hud">
-    <div id="hud-left">
-      <span id="current-score">0</span>
-      <span id="speed-indicator" style="font-size:0.75rem;color:#888;margin-left:0.4rem">Speed: 1x</span>
-    </div>
-    <div id="hud-center">
+    <div id="hud-row1">
+      <div id="hud-left">
+        <span id="current-score">0</span>
+        <span id="speed-indicator">Speed: 1x</span>
+      </div>
       <span id="personal-best">PB: 0</span>
-    </div>
-    <div id="hud-right">
       <div id="top-score-badge">
         <span class="badge-label">#1</span>
         <span id="top-score-name">---</span>
         <span id="top-score-value">0</span>
       </div>
+    </div>
+    <div id="hud-row2">
       <button id="mute-btn" class="icon-btn" title="Mute"></button>
       <button id="pause-btn" class="icon-btn" title="Pause">| |</button>
       <a href="/leaderboard.html" class="icon-btn" title="Leaderboard">
