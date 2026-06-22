@@ -791,10 +791,10 @@
   // share
   shareBtn.addEventListener("click", async () => {
     const modeLabel = mode === "easy" ? "Easy" : "Hard";
-    const text = `I scored ${score} on Snake (${modeLabel})! Can you beat it?`;
+    const text = `I scored ${score} on Snake (${modeLabel})! Can you beat it?\nhttps://snake.alfi3.com`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: "Snake", text });
+        await navigator.share({ title: "Snake", text, url: "https://snake.alfi3.com" });
       } catch {}
     } else {
       try {
