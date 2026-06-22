@@ -23,6 +23,9 @@
 
   let CELL;
   let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration;
+  let superFruit = null;
+  let superFruitTimer = null;
+  let tickCount = 0;
 
   mode = "easy";
 
@@ -82,6 +85,8 @@
     nextDir = { x: 1, y: 0 };
     score = 0;
     scoreEl.textContent = "0";
+    clearSuperFruit();
+    tickCount = 0;
     placeFood();
   }
 
@@ -95,6 +100,45 @@
       };
     } while (occupied.has(`${pos.x},${pos.y}`));
     food = pos;
+  }
+
+  function spawnSuperFruit() {
+    const head = snake[0];
+    const occupied = new Set(snake.map((s) => `${s.x},${s.y}`));
+    occupied.add(`${food.x},${food.y}`);
+
+    const candidates = [];
+    for (let dx = -3; dx <= 3; dx++) {
+      for (let dy = -3; dy <= 3; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        let nx = head.x + dx;
+        let ny = head.y + dy;
+        if (mode === "easy") {
+          nx = (nx + GRID) % GRID;
+          ny = (ny + GRID) % GRID;
+        } else if (nx < 0 || nx >= GRID || ny < 0 || ny >= GRID) {
+          continue;
+        }
+        if (!occupied.has(`${nx},${ny}`)) {
+          candidates.push({ x: nx, y: ny });
+        }
+      }
+    }
+    if (candidates.length === 0) return;
+
+    superFruit = candidates[Math.floor(Math.random() * candidates.length)];
+    if (!animFrame) animFrame = requestAnimationFrame(animateSuperFruit);
+    superFruitTimer = setTimeout(() => {
+      superFruit = null;
+      superFruitTimer = null;
+      draw();
+    }, 5000);
+  }
+
+  function clearSuperFruit() {
+    if (superFruitTimer) clearTimeout(superFruitTimer);
+    superFruit = null;
+    superFruitTimer = null;
   }
 
   function draw() {
@@ -127,6 +171,23 @@
     );
     ctx.fill();
     ctx.shadowBlur = 0;
+
+    if (superFruit) {
+      const pulse = 0.7 + Math.sin(Date.now() / 150) * 0.3;
+      ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
+      ctx.shadowColor = "#ffd700";
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(
+        superFruit.x * CELL + CELL / 2,
+        superFruit.y * CELL + CELL / 2,
+        CELL / 2 - 1,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
 
     snake.forEach((seg, i) => {
       const brightness = 1 - (i / snake.length) * 0.4;
@@ -168,11 +229,30 @@
       scoreEl.textContent = score;
       placeFood();
       updateSpeed();
+    } else if (superFruit && head.x === superFruit.x && head.y === superFruit.y) {
+      score += 50;
+      scoreEl.textContent = score;
+      clearSuperFruit();
     } else {
       snake.pop();
     }
 
+    tickCount++;
+    if (!superFruit && tickCount > 30 && Math.random() < 0.03) {
+      spawnSuperFruit();
+    }
+
     draw();
+  }
+
+  let animFrame = null;
+  function animateSuperFruit() {
+    if (superFruit && running) {
+      draw();
+      animFrame = requestAnimationFrame(animateSuperFruit);
+    } else {
+      animFrame = null;
+    }
   }
 
   function updateSpeed() {
