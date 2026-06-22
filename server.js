@@ -66,17 +66,33 @@ app.use(express.static(path.join(__dirname, "public"), {
 
 const ADMIN_KEY = process.env.ADMIN_KEY || "";
 
-const getScores = db.prepare(
-  "SELECT id, name, score, mode, duration FROM scores ORDER BY score DESC LIMIT 10"
-);
+const getScores = db.prepare(`
+  SELECT id, name, score, mode, duration
+  FROM scores s
+  WHERE id = (
+    SELECT id FROM scores s2 WHERE s2.name = s.name
+    ORDER BY s2.score DESC, CASE s2.mode WHEN 'hard' THEN 0 ELSE 1 END, s2.id DESC
+    LIMIT 1
+  )
+  ORDER BY score DESC
+  LIMIT 10
+`);
 const insertScore = db.prepare(
   "INSERT INTO scores (name, score, mode, duration) VALUES (@name, @score, @mode, @duration)"
 );
 const deleteScore = db.prepare("DELETE FROM scores WHERE id = ?");
 
-const getMultiScores = db.prepare(
-  "SELECT id, name, score, result, mode, duration FROM multi_scores ORDER BY score DESC LIMIT 10"
-);
+const getMultiScores = db.prepare(`
+  SELECT id, name, score, result, mode, duration
+  FROM multi_scores ms
+  WHERE id = (
+    SELECT id FROM multi_scores ms2 WHERE ms2.name = ms.name
+    ORDER BY ms2.score DESC, CASE ms2.mode WHEN 'hard' THEN 0 ELSE 1 END, ms2.id DESC
+    LIMIT 1
+  )
+  ORDER BY score DESC
+  LIMIT 10
+`);
 const insertMultiScore = db.prepare(
   "INSERT INTO multi_scores (name, score, result, mode, duration) VALUES (@name, @score, @result, @mode, @duration)"
 );
