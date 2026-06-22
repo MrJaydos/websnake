@@ -36,6 +36,13 @@ if (hasDuration.cnt === 0) {
   db.exec("ALTER TABLE scores ADD COLUMN duration INTEGER NOT NULL DEFAULT 0");
 }
 
+const hasFruits = db.prepare(
+  "SELECT COUNT(*) as cnt FROM pragma_table_info('scores') WHERE name = 'fruits'"
+).get();
+if (hasFruits.cnt === 0) {
+  db.exec("ALTER TABLE scores ADD COLUMN fruits INTEGER NOT NULL DEFAULT 0");
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS multi_scores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +74,7 @@ app.use(express.static(path.join(__dirname, "public"), {
 const ADMIN_KEY = process.env.ADMIN_KEY || "";
 
 const getScores = db.prepare(`
-  SELECT id, name, score, mode, duration
+  SELECT id, name, score, mode, duration, fruits
   FROM scores s
   WHERE id = (
     SELECT id FROM scores s2 WHERE s2.name = s.name
@@ -78,7 +85,7 @@ const getScores = db.prepare(`
   LIMIT 10
 `);
 const insertScore = db.prepare(
-  "INSERT INTO scores (name, score, mode, duration) VALUES (@name, @score, @mode, @duration)"
+  "INSERT INTO scores (name, score, mode, duration, fruits) VALUES (@name, @score, @mode, @duration, @fruits)"
 );
 const deleteScore = db.prepare("DELETE FROM scores WHERE id = ?");
 
@@ -107,7 +114,7 @@ app.get("/api/scores", (_req, res) => {
 });
 
 app.post("/api/scores", (req, res) => {
-  const { name, score, mode, duration } = req.body;
+  const { name, score, mode, duration, fruits } = req.body;
   if (
     !name ||
     typeof name !== "string" ||
@@ -121,7 +128,8 @@ app.post("/api/scores", (req, res) => {
   }
   const validMode = mode === "easy" ? "easy" : "hard";
   const validDuration = Number.isInteger(duration) && duration >= 0 ? duration : 0;
-  insertScore.run({ name: name.trim(), score, mode: validMode, duration: validDuration });
+  const validFruits = Number.isInteger(fruits) && fruits >= 0 ? fruits : 0;
+  insertScore.run({ name: name.trim(), score, mode: validMode, duration: validDuration, fruits: validFruits });
   res.json({ ok: true });
 });
 

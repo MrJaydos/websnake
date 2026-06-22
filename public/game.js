@@ -32,7 +32,7 @@
   const COMBO_WINDOW = 20;
 
   let CELL;
-  let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration;
+  let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration, fruitsEaten;
   let superFruit = null;
   let superFruitTimer = null;
   let superFruitSpawnedAt = 0;
@@ -249,6 +249,7 @@
     combo = 0;
     lastFoodTick = -999;
     comboText = null;
+    fruitsEaten = 0;
     updateSpeedDisplay();
     placeFood();
   }
@@ -609,6 +610,7 @@
       const pts = Math.round(10 * mult);
       score += pts;
       scoreEl.textContent = score;
+      fruitsEaten++;
       playEatSound();
       if (combo >= 2) {
         comboText = `${combo}x COMBO!`;
@@ -621,6 +623,7 @@
       const mult = getComboMultiplier();
       score += Math.round(50 * mult);
       scoreEl.textContent = score;
+      fruitsEaten++;
       playSuperFruitSound();
       clearSuperFruit();
     } else if (star && head.x === star.x && head.y === star.y) {
@@ -769,26 +772,92 @@
     clearInterval(gameLoop);
     deactivateStar();
     playDeathSound();
+    if (navigator.vibrate) navigator.vibrate([50, 30, 80]);
     gameDuration = Date.now() - startTime - pausedElapsed;
-    finalScoreEl.textContent = score;
-    finalMode.textContent = mode === "easy" ? "Easy" : "Hard";
-
-    if (score > topScore && topScore > 0) {
-      showNewHighScore();
-    }
 
     const pb = getPersonalBest();
-    if (score > pb) {
-      setPersonalBest(score);
-    }
+    if (score > pb) setPersonalBest(score);
 
-    gameoverScreen.hidden = false;
-    overlay.style.display = "flex";
-    scoreForm.hidden = false;
-    replayBtn.hidden = true;
-    shareBtn.hidden = false;
-    nameInput.value = localStorage.getItem("snakeName") || "";
-    nameInput.focus();
+    playDeathAnimation(() => {
+      finalScoreEl.textContent = score;
+      finalMode.textContent = mode === "easy" ? "Easy" : "Hard";
+      document.getElementById("final-fruits").textContent = fruitsEaten;
+
+      if (score > topScore && topScore > 0) showNewHighScore();
+
+      gameoverScreen.hidden = false;
+      overlay.style.display = "flex";
+
+      const savedName = localStorage.getItem("snakeName");
+      if (savedName) {
+        scoreForm.hidden = true;
+        replayBtn.hidden = false;
+        shareBtn.hidden = false;
+        autoSubmitScore(savedName);
+      } else {
+        scoreForm.hidden = false;
+        replayBtn.hidden = true;
+        shareBtn.hidden = false;
+        nameInput.value = "";
+        nameInput.focus();
+      }
+    });
+  }
+
+  function autoSubmitScore(name) {
+    fetch("/api/scores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, score, mode, duration: Math.floor(gameDuration / 1000), fruits: fruitsEaten }),
+    }).catch(() => {});
+    loadTopScore();
+  }
+
+  function playDeathAnimation(callback) {
+    let frame = 0;
+    const totalFrames = 12;
+    const deadSnake = snake.map((s) => ({ ...s }));
+    const colors = getSnakeColors();
+
+    function animateDeath() {
+      frame++;
+      ctx.fillStyle = "#1a1a2e";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = "#1f1f3a";
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i <= GRID; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * CELL, 0);
+        ctx.lineTo(i * CELL, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i * CELL);
+        ctx.lineTo(canvas.width, i * CELL);
+        ctx.stroke();
+      }
+
+      const flash = frame % 4 < 2;
+      const fadeOut = 1 - (frame / totalFrames);
+      const segsToDraw = Math.max(0, deadSnake.length - Math.floor((frame / totalFrames) * deadSnake.length));
+
+      for (let i = 0; i < segsToDraw; i++) {
+        const seg = deadSnake[i];
+        if (flash) {
+          ctx.fillStyle = `rgba(255, 68, 68, ${fadeOut})`;
+        } else {
+          ctx.fillStyle = `rgba(${colors.r || 0}, ${colors.g || 255}, ${colors.b || 65}, ${fadeOut * 0.5})`;
+        }
+        ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2);
+      }
+
+      if (frame < totalFrames) {
+        requestAnimationFrame(animateDeath);
+      } else {
+        callback();
+      }
+    }
+    requestAnimationFrame(animateDeath);
   }
 
   function startGame() {
@@ -913,7 +982,7 @@
       await fetch("/api/scores", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, score, mode, duration: Math.floor(gameDuration / 1000) }),
+        body: JSON.stringify({ name, score, mode, duration: Math.floor(gameDuration / 1000), fruits: fruitsEaten }),
       });
     } catch {
       // offline
