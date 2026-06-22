@@ -56,7 +56,6 @@
   let starSpawnedAt = 0;
   let starActive = false;
   let starEndTime = 0;
-  let starAudioCtx = null;
   let starOscillators = [];
 
   // timer remaining values for pause/resume
@@ -71,8 +70,19 @@
     if (!sfxCtx || sfxCtx.state === "closed") {
       try { sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; }
     }
+    if (sfxCtx.state === "suspended") sfxCtx.resume();
     return sfxCtx;
   }
+
+  function unlockAudio() {
+    getSfxCtx();
+    document.removeEventListener("touchstart", unlockAudio, true);
+    document.removeEventListener("touchend", unlockAudio, true);
+    document.removeEventListener("click", unlockAudio, true);
+  }
+  document.addEventListener("touchstart", unlockAudio, true);
+  document.addEventListener("touchend", unlockAudio, true);
+  document.addEventListener("click", unlockAudio, true);
 
   function playEatSound() {
     const ctx = getSfxCtx();
@@ -332,12 +342,10 @@
     stopStarMusic();
   }
 
-  // 8-bit star music using Web Audio API
   function playStarMusic() {
     stopStarMusic();
-    try {
-      starAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch { return; }
+    const ctx = getSfxCtx();
+    if (!ctx) return;
 
     const bpm = 400;
     const noteLen = 60 / bpm;
@@ -348,21 +356,21 @@
       880, 784, 659, 784, 880, 784, 659, 523,
     ];
 
-    const gainNode = starAudioCtx.createGain();
+    const gainNode = ctx.createGain();
     gainNode.gain.value = 0.08;
-    gainNode.connect(starAudioCtx.destination);
+    gainNode.connect(ctx.destination);
 
     const totalDuration = melody.length * noteLen;
     const loops = Math.ceil(STAR_DURATION / 1000 / totalDuration) + 1;
 
     for (let loop = 0; loop < loops; loop++) {
       melody.forEach((freq, i) => {
-        const t = starAudioCtx.currentTime + (loop * totalDuration) + (i * noteLen);
-        const osc = starAudioCtx.createOscillator();
+        const t = ctx.currentTime + (loop * totalDuration) + (i * noteLen);
+        const osc = ctx.createOscillator();
         osc.type = "square";
         osc.frequency.value = freq;
 
-        const env = starAudioCtx.createGain();
+        const env = ctx.createGain();
         env.gain.setValueAtTime(0.08, t);
         env.gain.exponentialRampToValueAtTime(0.01, t + noteLen * 0.9);
 
@@ -378,10 +386,6 @@
   function stopStarMusic() {
     starOscillators.forEach((o) => { try { o.stop(); } catch {} });
     starOscillators = [];
-    if (starAudioCtx) {
-      try { starAudioCtx.close(); } catch {}
-      starAudioCtx = null;
-    }
   }
 
   function getSnakeColors() {
