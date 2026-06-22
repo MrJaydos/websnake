@@ -138,17 +138,36 @@
   function playDeathSound() {
     const ctx = getSfxCtx();
     if (!ctx) return;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = "square";
-    osc.frequency.setValueAtTime(400, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.4);
-    gain.gain.setValueAtTime(0.15, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.5);
+    const notes = [494, 349, 294, 233, 147, 117];
+    const noteLen = 0.12;
+    const gap = 0.08;
+    const t = ctx.currentTime;
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      const start = t + i * (noteLen + gap);
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.13, start);
+      gain.gain.setValueAtTime(0.13, start + noteLen * 0.7);
+      gain.gain.linearRampToValueAtTime(0, start + noteLen);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + noteLen);
+    });
+    const lastStart = t + (notes.length - 1) * (noteLen + gap);
+    const buzzOsc = ctx.createOscillator();
+    const buzzGain = ctx.createGain();
+    buzzOsc.type = "square";
+    buzzOsc.frequency.setValueAtTime(80, lastStart + noteLen + 0.05);
+    buzzOsc.frequency.linearRampToValueAtTime(40, lastStart + noteLen + 0.55);
+    buzzGain.gain.setValueAtTime(0.1, lastStart + noteLen + 0.05);
+    buzzGain.gain.linearRampToValueAtTime(0, lastStart + noteLen + 0.55);
+    buzzOsc.connect(buzzGain);
+    buzzGain.connect(ctx.destination);
+    buzzOsc.start(lastStart + noteLen + 0.05);
+    buzzOsc.stop(lastStart + noteLen + 0.6);
   }
 
   function getPersonalBest() {
@@ -868,11 +887,12 @@
 
   function playDeathAnimation(callback) {
     let frame = 0;
-    const totalFrames = 12;
+    const totalFrames = 30;
+    const frameDelay = 50;
     const deadSnake = snake.map((s) => ({ ...s }));
     const colors = getSnakeColors();
 
-    function animateDeath() {
+    function drawFrame() {
       frame++;
       ctx.fillStyle = "#1a1a2e";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -890,9 +910,10 @@
         ctx.stroke();
       }
 
-      const flash = frame % 4 < 2;
-      const fadeOut = 1 - (frame / totalFrames);
-      const segsToDraw = Math.max(0, deadSnake.length - Math.floor((frame / totalFrames) * deadSnake.length));
+      const progress = frame / totalFrames;
+      const flash = frame % 6 < 3;
+      const fadeOut = 1 - progress;
+      const segsToDraw = Math.max(0, deadSnake.length - Math.floor(progress * deadSnake.length));
 
       for (let i = 0; i < segsToDraw; i++) {
         const seg = deadSnake[i];
@@ -905,12 +926,12 @@
       }
 
       if (frame < totalFrames) {
-        requestAnimationFrame(animateDeath);
+        setTimeout(drawFrame, frameDelay);
       } else {
-        callback();
+        setTimeout(callback, 600);
       }
     }
-    requestAnimationFrame(animateDeath);
+    setTimeout(drawFrame, frameDelay);
   }
 
   function startGame() {
