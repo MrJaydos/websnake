@@ -66,6 +66,65 @@
 
   mode = "easy";
 
+  let sfxCtx = null;
+  function getSfxCtx() {
+    if (!sfxCtx || sfxCtx.state === "closed") {
+      try { sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; }
+    }
+    return sfxCtx;
+  }
+
+  function playEatSound() {
+    const ctx = getSfxCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.06);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.1);
+  }
+
+  function playSuperFruitSound() {
+    const ctx = getSfxCtx();
+    if (!ctx) return;
+    const notes = [800, 1000, 1200, 1600];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "square";
+      const t = ctx.currentTime + i * 0.06;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.1, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.08);
+    });
+  }
+
+  function playDeathSound() {
+    const ctx = getSfxCtx();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + 0.4);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.5);
+  }
+
   function getPersonalBest() {
     return parseInt(localStorage.getItem(`snakePB_${mode}`) || "0", 10);
   }
@@ -530,6 +589,7 @@
       const pts = Math.round(10 * mult);
       score += pts;
       scoreEl.textContent = score;
+      playEatSound();
       if (combo >= 2) {
         comboText = `${combo}x COMBO!`;
         comboTextTime = Date.now();
@@ -541,6 +601,7 @@
       const mult = getComboMultiplier();
       score += Math.round(50 * mult);
       scoreEl.textContent = score;
+      playSuperFruitSound();
       clearSuperFruit();
     } else if (star && head.x === star.x && head.y === star.y) {
       score += 30;
@@ -687,6 +748,7 @@
     running = false;
     clearInterval(gameLoop);
     deactivateStar();
+    playDeathSound();
     gameDuration = Date.now() - startTime - pausedElapsed;
     finalScoreEl.textContent = score;
     finalMode.textContent = mode === "easy" ? "Easy" : "Hard";
