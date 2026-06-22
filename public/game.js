@@ -25,6 +25,7 @@
   let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration;
   let superFruit = null;
   let superFruitTimer = null;
+  let superFruitSpawnedAt = 0;
   let tickCount = 0;
 
   mode = "easy";
@@ -127,6 +128,7 @@
     if (candidates.length === 0) return;
 
     superFruit = candidates[Math.floor(Math.random() * candidates.length)];
+    superFruitSpawnedAt = Date.now();
     if (!animFrame) animFrame = requestAnimationFrame(animateSuperFruit);
     superFruitTimer = setTimeout(() => {
       superFruit = null;
@@ -173,6 +175,8 @@
     ctx.shadowBlur = 0;
 
     if (superFruit) {
+      const elapsed = Date.now() - superFruitSpawnedAt;
+      const remaining = Math.ceil((5000 - elapsed) / 1000);
       const pulse = 0.7 + Math.sin(Date.now() / 150) * 0.3;
       ctx.fillStyle = `rgba(255, 215, 0, ${pulse})`;
       ctx.shadowColor = "#ffd700";
@@ -187,6 +191,17 @@
       );
       ctx.fill();
       ctx.shadowBlur = 0;
+
+      const textPulse = 0.8 + Math.sin(Date.now() / 200) * 0.2;
+      ctx.font = `bold ${Math.round(CELL * 0.6)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = `rgba(15, 15, 35, ${textPulse})`;
+      ctx.fillText(
+        remaining > 0 ? remaining : "1",
+        superFruit.x * CELL + CELL / 2,
+        superFruit.y * CELL + CELL / 2
+      );
     }
 
     snake.forEach((seg, i) => {
@@ -238,7 +253,7 @@
     }
 
     tickCount++;
-    if (!superFruit && tickCount > 30 && Math.random() < 0.03) {
+    if (!superFruit && tickCount > 60 && Math.random() < 0.005) {
       spawnSuperFruit();
     }
 
