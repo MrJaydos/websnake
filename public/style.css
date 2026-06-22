@@ -301,6 +301,34 @@ input[type="text"]:focus { border-color: #33ff66; }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5) translateY(-30px); }
 }
 
+/* === STREAK INFO === */
+#streak-info {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+  margin-bottom: 0.6rem;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+#streak-info:empty { display: none; }
+
+.streak-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.streak-val {
+  color: #ffd700;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.streak-fire {
+  color: #ff8800;
+}
+
 /* === STAR POWER-UP === */
 @keyframes starBorder {
   0% { border-color: #ff0000; }

@@ -24,6 +24,7 @@
   const resumeBtn = document.getElementById("resume-btn");
   const shareBtn = document.getElementById("share-btn");
   const pbEl = document.getElementById("personal-best");
+  const streakInfo = document.getElementById("streak-info");
 
   const GRID = 20;
   const BASE_INTERVAL = 150;
@@ -165,6 +166,58 @@
   }
 
   updatePBDisplay();
+
+  function getToday() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function getStreak() {
+    try {
+      return JSON.parse(localStorage.getItem("snakeStreak")) || {};
+    } catch { return {}; }
+  }
+
+  function recordGame() {
+    const today = getToday();
+    const s = getStreak();
+    if (s.lastDate === today) {
+      s.gamesToday = (s.gamesToday || 0) + 1;
+    } else {
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      if (s.lastDate === yesterday) {
+        s.dayStreak = (s.dayStreak || 1) + 1;
+      } else {
+        s.dayStreak = 1;
+      }
+      s.gamesToday = 1;
+      s.lastDate = today;
+    }
+    s.totalGames = (s.totalGames || 0) + 1;
+    localStorage.setItem("snakeStreak", JSON.stringify(s));
+    updateStreakDisplay();
+  }
+
+  function updateStreakDisplay() {
+    const s = getStreak();
+    const today = getToday();
+    const games = s.lastDate === today ? (s.gamesToday || 0) : 0;
+    const streak = s.dayStreak || 0;
+    const total = s.totalGames || 0;
+
+    if (total === 0) {
+      streakInfo.innerHTML = "";
+      return;
+    }
+
+    let html = `<span class="streak-stat">Today: <span class="streak-val">${games}</span></span>`;
+    if (streak > 1) {
+      html += `<span class="streak-stat"><span class="streak-fire">&#x1F525;</span> <span class="streak-val">${streak}</span> day streak</span>`;
+    }
+    html += `<span class="streak-stat">Total: <span class="streak-val">${total}</span></span>`;
+    streakInfo.innerHTML = html;
+  }
+
+  updateStreakDisplay();
 
   // color picker
   colorBtns.forEach((btn) => {
@@ -869,6 +922,7 @@
     pauseScreen.hidden = true;
     running = true;
     startTime = Date.now();
+    recordGame();
     draw();
     gameLoop = setInterval(tick, BASE_INTERVAL);
   }
