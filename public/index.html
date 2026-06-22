@@ -7,9 +7,11 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="new-high-score" hidden>NEW #1!</div>
   <div id="hud">
     <div id="hud-left">
       <span id="current-score">0</span>
+      <span id="speed-indicator" style="font-size:0.75rem;color:#888;margin-left:0.4rem">Speed: 1x</span>
     </div>
     <div id="hud-right">
       <div id="top-score-badge">
@@ -34,6 +36,14 @@
           <button class="mode-btn" data-mode="hard">Hard</button>
         </div>
         <p id="mode-desc">Walls wrap around</p>
+        <div id="color-select">
+          <button class="color-btn selected" data-color="#00ff41" style="background:#00ff41" title="Green"></button>
+          <button class="color-btn" data-color="#00aaff" style="background:#00aaff" title="Blue"></button>
+          <button class="color-btn" data-color="#ff44ff" style="background:#ff44ff" title="Pink"></button>
+          <button class="color-btn" data-color="#ff8800" style="background:#ff8800" title="Orange"></button>
+          <button class="color-btn" data-color="#ffff00" style="background:#ffff00" title="Yellow"></button>
+          <button class="color-btn" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+        </div>
         <button id="start-btn">Play</button>
         <a href="/multi.html" class="multi-link">Multiplayer</a>
       </div>

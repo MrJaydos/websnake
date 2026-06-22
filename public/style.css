@@ -228,6 +228,71 @@ input[type="text"]:focus { border-color: #33ff66; }
   #dpad { display: flex; }
 }
 
+/* === COLOR PICKER === */
+#color-select {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+
+.color-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+.color-btn:hover { transform: scale(1.2); }
+.color-btn.selected { border-color: #fff; transform: scale(1.2); }
+
+/* === SPEED INDICATOR === */
+#speed-indicator {
+  font-size: 0.75rem;
+  color: #888;
+  margin-left: 0.4rem;
+  font-weight: 400;
+}
+
+/* === NEW HIGH SCORE FLASH === */
+#new-high-score {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  font-weight: 900;
+  color: #ffd700;
+  text-shadow: 0 0 20px #ffd700, 0 0 40px #ff8800, 0 0 60px #ff4400;
+  z-index: 100;
+  pointer-events: none;
+  animation: highScoreFlash 2s ease-out forwards;
+}
+
+@keyframes highScoreFlash {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5) translateY(-30px); }
+}
+
+/* === STAR POWER-UP === */
+@keyframes starBorder {
+  0% { border-color: #ff0000; }
+  16% { border-color: #ff8800; }
+  33% { border-color: #ffff00; }
+  50% { border-color: #00ff41; }
+  66% { border-color: #00aaff; }
+  83% { border-color: #ff44ff; }
+  100% { border-color: #ff0000; }
+}
+
+canvas.star-active {
+  animation: starBorder 0.5s linear infinite;
+}
+
 /* === LEADERBOARD PAGE === */
 #lb-page {
   padding: 1rem;

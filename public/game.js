@@ -16,10 +16,14 @@
   const modeBtns = document.querySelectorAll(".mode-btn");
   const modeDesc = document.getElementById("mode-desc");
   const finalMode = document.getElementById("final-mode");
+  const speedIndicator = document.getElementById("speed-indicator");
+  const newHighScoreEl = document.getElementById("new-high-score");
+  const colorBtns = document.querySelectorAll(".color-btn");
 
   const GRID = 20;
   const BASE_INTERVAL = 150;
   const MIN_INTERVAL = 60;
+  const STAR_DURATION = 6000;
 
   let CELL;
   let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration;
@@ -27,8 +31,34 @@
   let superFruitTimer = null;
   let superFruitSpawnedAt = 0;
   let tickCount = 0;
+  let snakeColor = localStorage.getItem("snakeColor") || "#00ff41";
+  let currentInterval = BASE_INTERVAL;
+  let topScore = 0;
+
+  // star power-up state
+  let star = null;
+  let starTimer = null;
+  let starSpawnedAt = 0;
+  let starActive = false;
+  let starEndTime = 0;
+  let starAudioCtx = null;
+  let starOscillators = [];
 
   mode = "easy";
+
+  // color picker
+  colorBtns.forEach((btn) => {
+    if (btn.dataset.color === snakeColor) {
+      colorBtns.forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+    }
+    btn.addEventListener("click", () => {
+      colorBtns.forEach((b) => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      snakeColor = btn.dataset.color;
+      localStorage.setItem("snakeColor", snakeColor);
+    });
+  });
 
   const HUD_H = 36;
   const dpad = document.getElementById("dpad");
@@ -87,7 +117,11 @@
     score = 0;
     scoreEl.textContent = "0";
     clearSuperFruit();
+    clearStar();
+    deactivateStar();
     tickCount = 0;
+    currentInterval = BASE_INTERVAL;
+    updateSpeedDisplay();
     placeFood();
   }
 
@@ -107,6 +141,7 @@
     const head = snake[0];
     const occupied = new Set(snake.map((s) => `${s.x},${s.y}`));
     occupied.add(`${food.x},${food.y}`);
+    if (star) occupied.add(`${star.x},${star.y}`);
 
     const candidates = [];
     for (let dx = -3; dx <= 3; dx++) {
@@ -129,7 +164,7 @@
 
     superFruit = candidates[Math.floor(Math.random() * candidates.length)];
     superFruitSpawnedAt = Date.now();
-    if (!animFrame) animFrame = requestAnimationFrame(animateSuperFruit);
+    if (!animFrame) animFrame = requestAnimationFrame(animateEffects);
     superFruitTimer = setTimeout(() => {
       superFruit = null;
       superFruitTimer = null;
@@ -143,7 +178,127 @@
     superFruitTimer = null;
   }
 
+  // star power-up
+  function spawnStar() {
+    const occupied = new Set(snake.map((s) => `${s.x},${s.y}`));
+    occupied.add(`${food.x},${food.y}`);
+    if (superFruit) occupied.add(`${superFruit.x},${superFruit.y}`);
+
+    const candidates = [];
+    for (let x = 0; x < GRID; x++) {
+      for (let y = 0; y < GRID; y++) {
+        if (!occupied.has(`${x},${y}`)) candidates.push({ x, y });
+      }
+    }
+    if (candidates.length === 0) return;
+
+    star = candidates[Math.floor(Math.random() * candidates.length)];
+    starSpawnedAt = Date.now();
+    if (!animFrame) animFrame = requestAnimationFrame(animateEffects);
+    starTimer = setTimeout(() => {
+      star = null;
+      starTimer = null;
+      draw();
+    }, 7000);
+  }
+
+  function clearStar() {
+    if (starTimer) clearTimeout(starTimer);
+    star = null;
+    starTimer = null;
+  }
+
+  function activateStar() {
+    starActive = true;
+    starEndTime = Date.now() + STAR_DURATION;
+    canvas.classList.add("star-active");
+    playStarMusic();
+    if (!animFrame) animFrame = requestAnimationFrame(animateEffects);
+    setTimeout(() => {
+      deactivateStar();
+      draw();
+    }, STAR_DURATION);
+  }
+
+  function deactivateStar() {
+    starActive = false;
+    canvas.classList.remove("star-active");
+    stopStarMusic();
+  }
+
+  // 8-bit star music using Web Audio API
+  function playStarMusic() {
+    stopStarMusic();
+    try {
+      starAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch { return; }
+
+    const bpm = 400;
+    const noteLen = 60 / bpm;
+    const melody = [
+      523, 587, 659, 698, 784, 880, 784, 880,
+      659, 698, 784, 698, 659, 587, 523, 587,
+      659, 784, 880, 988, 880, 988, 1047, 988,
+      880, 784, 659, 784, 880, 784, 659, 523,
+    ];
+
+    const gainNode = starAudioCtx.createGain();
+    gainNode.gain.value = 0.08;
+    gainNode.connect(starAudioCtx.destination);
+
+    const totalDuration = melody.length * noteLen;
+    const loops = Math.ceil(STAR_DURATION / 1000 / totalDuration) + 1;
+
+    for (let loop = 0; loop < loops; loop++) {
+      melody.forEach((freq, i) => {
+        const t = starAudioCtx.currentTime + (loop * totalDuration) + (i * noteLen);
+        const osc = starAudioCtx.createOscillator();
+        osc.type = "square";
+        osc.frequency.value = freq;
+
+        const env = starAudioCtx.createGain();
+        env.gain.setValueAtTime(0.08, t);
+        env.gain.exponentialRampToValueAtTime(0.01, t + noteLen * 0.9);
+
+        osc.connect(env);
+        env.connect(gainNode);
+        osc.start(t);
+        osc.stop(t + noteLen * 0.95);
+        starOscillators.push(osc);
+      });
+    }
+  }
+
+  function stopStarMusic() {
+    starOscillators.forEach((o) => { try { o.stop(); } catch {} });
+    starOscillators = [];
+    if (starAudioCtx) {
+      try { starAudioCtx.close(); } catch {}
+      starAudioCtx = null;
+    }
+  }
+
+  function getSnakeColors() {
+    if (starActive) {
+      const t = Date.now();
+      const hue = (t / 5) % 360;
+      return {
+        body: `hsl(${hue}, 100%, 60%)`,
+        head: `hsl(${(hue + 30) % 360}, 100%, 80%)`,
+      };
+    }
+    const r = parseInt(snakeColor.slice(1, 3), 16);
+    const g = parseInt(snakeColor.slice(3, 5), 16);
+    const b = parseInt(snakeColor.slice(5, 7), 16);
+    return {
+      body: snakeColor,
+      head: `rgb(${Math.min(255, r + 60)}, ${Math.min(255, g + 60)}, ${Math.min(255, b + 60)})`,
+      r, g, b,
+    };
+  }
+
   function draw() {
+    if (!CELL) return;
     ctx.fillStyle = "#1a1a2e";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -160,6 +315,7 @@
       ctx.stroke();
     }
 
+    // regular food
     ctx.fillStyle = "#ff4444";
     ctx.shadowColor = "#ff4444";
     ctx.shadowBlur = 8;
@@ -174,6 +330,7 @@
     ctx.fill();
     ctx.shadowBlur = 0;
 
+    // super fruit
     if (superFruit) {
       const elapsed = Date.now() - superFruitSpawnedAt;
       const remaining = Math.ceil((5000 - elapsed) / 1000);
@@ -204,19 +361,73 @@
       );
     }
 
+    // star pickup
+    if (star) {
+      const elapsed = Date.now() - starSpawnedAt;
+      const remaining = Math.ceil((7000 - elapsed) / 1000);
+      const t = Date.now();
+      const starHue = (t / 3) % 360;
+      const starPulse = 0.8 + Math.sin(t / 120) * 0.2;
+      ctx.fillStyle = `hsla(${starHue}, 100%, 65%, ${starPulse})`;
+      ctx.shadowColor = `hsl(${starHue}, 100%, 65%)`;
+      ctx.shadowBlur = 15;
+
+      // draw star shape
+      const cx = star.x * CELL + CELL / 2;
+      const cy = star.y * CELL + CELL / 2;
+      const outerR = CELL / 2 - 1;
+      const innerR = outerR * 0.4;
+      ctx.beginPath();
+      for (let p = 0; p < 5; p++) {
+        const angle = -Math.PI / 2 + (p * 2 * Math.PI / 5);
+        const ix = cx + Math.cos(angle) * outerR;
+        const iy = cy + Math.sin(angle) * outerR;
+        if (p === 0) ctx.moveTo(ix, iy); else ctx.lineTo(ix, iy);
+        const innerAngle = angle + Math.PI / 5;
+        ctx.lineTo(cx + Math.cos(innerAngle) * innerR, cy + Math.sin(innerAngle) * innerR);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.font = `bold ${Math.round(CELL * 0.45)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = `rgba(15, 15, 35, ${starPulse})`;
+      ctx.fillText(remaining > 0 ? remaining : "1", cx, cy);
+    }
+
+    // snake
+    const colors = getSnakeColors();
     snake.forEach((seg, i) => {
-      const brightness = 1 - (i / snake.length) * 0.4;
-      ctx.fillStyle = `rgba(0, 255, 65, ${brightness})`;
+      if (starActive) {
+        const hue = ((Date.now() / 5) + i * 15) % 360;
+        ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+      } else {
+        const fade = 1 - (i / snake.length) * 0.4;
+        ctx.fillStyle = `rgba(${colors.r}, ${colors.g}, ${colors.b}, ${fade})`;
+      }
       ctx.fillRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2);
     });
 
-    ctx.fillStyle = "#66ff88";
+    // head highlight
+    ctx.fillStyle = colors.head;
     ctx.fillRect(
       snake[0].x * CELL + 3,
       snake[0].y * CELL + 3,
       CELL - 6,
       CELL - 6
     );
+
+    // star timer bar
+    if (starActive) {
+      const remaining = Math.max(0, starEndTime - Date.now());
+      const pct = remaining / STAR_DURATION;
+      const barH = 3;
+      const hue = (Date.now() / 3) % 360;
+      ctx.fillStyle = `hsl(${hue}, 100%, 60%)`;
+      ctx.fillRect(0, canvas.height - barH, canvas.width * pct, barH);
+    }
   }
 
   function tick() {
@@ -233,7 +444,8 @@
       return gameOver();
     }
 
-    if (snake.some((s) => s.x === head.x && s.y === head.y)) {
+    // self collision — skip during star mode
+    if (!starActive && snake.some((s) => s.x === head.x && s.y === head.y)) {
       return gameOver();
     }
 
@@ -248,23 +460,31 @@
       score += 50;
       scoreEl.textContent = score;
       clearSuperFruit();
+    } else if (star && head.x === star.x && head.y === star.y) {
+      score += 30;
+      scoreEl.textContent = score;
+      clearStar();
+      activateStar();
     } else {
       snake.pop();
     }
 
     tickCount++;
-    if (!superFruit && tickCount > 60 && Math.random() < 0.005) {
+    if (!superFruit && !starActive && tickCount > 60 && Math.random() < 0.005) {
       spawnSuperFruit();
+    }
+    if (!star && !starActive && tickCount > 100 && Math.random() < 0.002) {
+      spawnStar();
     }
 
     draw();
   }
 
   let animFrame = null;
-  function animateSuperFruit() {
-    if (superFruit && running) {
+  function animateEffects() {
+    if ((superFruit || star || starActive) && running) {
       draw();
-      animFrame = requestAnimationFrame(animateSuperFruit);
+      animFrame = requestAnimationFrame(animateEffects);
     } else {
       animFrame = null;
     }
@@ -272,8 +492,14 @@
 
   function updateSpeed() {
     clearInterval(gameLoop);
-    const interval = Math.max(MIN_INTERVAL, BASE_INTERVAL - snake.length * 3);
-    gameLoop = setInterval(tick, interval);
+    currentInterval = Math.max(MIN_INTERVAL, BASE_INTERVAL - snake.length * 3);
+    gameLoop = setInterval(tick, currentInterval);
+    updateSpeedDisplay();
+  }
+
+  function updateSpeedDisplay() {
+    const speed = (BASE_INTERVAL / currentInterval).toFixed(1);
+    speedIndicator.textContent = `Speed: ${speed}x`;
   }
 
   function formatDuration(ms) {
@@ -283,12 +509,26 @@
     return m > 0 ? m + "m " + s + "s" : s + "s";
   }
 
+  function showNewHighScore() {
+    newHighScoreEl.hidden = false;
+    newHighScoreEl.style.animation = "none";
+    newHighScoreEl.offsetHeight;
+    newHighScoreEl.style.animation = "";
+    setTimeout(() => { newHighScoreEl.hidden = true; }, 2000);
+  }
+
   function gameOver() {
     running = false;
     clearInterval(gameLoop);
+    deactivateStar();
     gameDuration = Date.now() - startTime;
     finalScoreEl.textContent = score;
     finalMode.textContent = mode === "easy" ? "Easy" : "Hard";
+
+    if (score > topScore && topScore > 0) {
+      showNewHighScore();
+    }
+
     gameoverScreen.hidden = false;
     overlay.style.display = "flex";
     scoreForm.hidden = false;
@@ -413,6 +653,7 @@
       if (data.length > 0) {
         topScoreName.textContent = data[0].name;
         topScoreValue.textContent = data[0].score;
+        topScore = data[0].score;
       }
     } catch {
       // ignore
