@@ -215,7 +215,7 @@ input[type="text"]:focus { border-color: #33ff66; }
   display: none;
   flex-direction: column;
   align-items: center;
-  padding-bottom: env(safe-area-inset-bottom, 8px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 1.2rem);
   z-index: 10;
   touch-action: none;
 }
