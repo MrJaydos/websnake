@@ -145,6 +145,31 @@
       font-size: 0.95rem;
     }
 
+    .del-btn {
+      background: none;
+      border: none;
+      color: #555;
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      display: none;
+    }
+    .del-btn:hover { color: #ff4444; background: rgba(255, 68, 68, 0.1); }
+    .admin-mode .del-btn { display: inline-block; }
+
+    #admin-toggle {
+      background: none;
+      border: 1px solid #2a2a4a;
+      color: #555;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #admin-toggle:hover { border-color: #ff4444; color: #ff4444; }
+    #admin-toggle.active { border-color: #ff4444; color: #ff4444; }
+
     @media (min-width: 600px) {
       #lb-page { padding: 2rem 2.5rem; }
       thead th { padding: 0.8rem 1rem; }
@@ -162,6 +187,7 @@
       <div id="lb-nav">
         <a href="/">Solo</a>
         <a href="/multi.html">Multiplayer</a>
+        <button id="admin-toggle" title="Toggle admin mode">Admin</button>
       </div>
     </div>
 
@@ -188,6 +214,9 @@
   <script>
     const tabBtns = document.querySelectorAll(".tab-btn");
     const tabContents = document.querySelectorAll(".tab-content");
+    const adminToggle = document.getElementById("admin-toggle");
+    const lbPage = document.getElementById("lb-page");
+    let adminKey = localStorage.getItem("adminKey") || "";
 
     tabBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -196,6 +225,21 @@
         btn.classList.add("active");
         document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
       });
+    });
+
+    adminToggle.addEventListener("click", () => {
+      if (lbPage.classList.contains("admin-mode")) {
+        lbPage.classList.remove("admin-mode");
+        adminToggle.classList.remove("active");
+      } else {
+        const key = prompt("Admin key:");
+        if (key !== null) {
+          adminKey = key;
+          localStorage.setItem("adminKey", key);
+          lbPage.classList.add("admin-mode");
+          adminToggle.classList.add("active");
+        }
+      }
     });
 
     function escapeHtml(str) {
@@ -211,13 +255,33 @@
       return m > 0 ? m + "m " + s + "s" : s + "s";
     }
 
+    async function deleteEntry(type, id) {
+      if (!confirm("Delete this score?")) return;
+      try {
+        const res = await fetch(`/api/${type}/${id}`, {
+          method: "DELETE",
+          headers: { "X-Admin-Key": adminKey },
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          alert(data.error || "Failed to delete");
+          return;
+        }
+      } catch {
+        alert("Network error");
+        return;
+      }
+      loadSolo();
+      loadMulti();
+    }
+
     async function loadSolo() {
       const tbody = document.getElementById("solo-body");
       try {
         const res = await fetch("/api/scores");
         const data = await res.json();
         if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No scores yet. Go play!</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No scores yet. Go play!</td></tr>';
           return;
         }
         tbody.innerHTML = data
@@ -227,10 +291,11 @@
             <td class="score-cell">${row.score}</td>
             <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
             <td class="time-cell">${formatDuration(row.duration)}</td>
+            <td><button class="del-btn" onclick="deleteEntry('scores',${row.id})">X</button></td>
           </tr>`)
           .join("");
       } catch {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Could not load scores</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Could not load scores</td></tr>';
       }
     }
 
@@ -240,7 +305,7 @@
         const res = await fetch("/api/multi-scores");
         const data = await res.json();
         if (data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No multiplayer scores yet</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No multiplayer scores yet</td></tr>';
           return;
         }
         tbody.innerHTML = data
@@ -254,11 +319,12 @@
               <td class="${resultClass}">${resultLabel}</td>
               <td class="mode-cell">${row.mode === "easy" ? "Easy" : "Hard"}</td>
               <td class="time-cell">${formatDuration(row.duration)}</td>
+              <td><button class="del-btn" onclick="deleteEntry('multi-scores',${row.id})">X</button></td>
             </tr>`;
           })
           .join("");
       } catch {
-        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Could not load scores</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Could not load scores</td></tr>';
       }
     }
 

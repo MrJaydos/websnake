@@ -64,19 +64,23 @@ app.use(express.static(path.join(__dirname, "public"), {
   },
 }));
 
+const ADMIN_KEY = process.env.ADMIN_KEY || "";
+
 const getScores = db.prepare(
-  "SELECT name, score, mode, duration FROM scores ORDER BY score DESC LIMIT 10"
+  "SELECT id, name, score, mode, duration FROM scores ORDER BY score DESC LIMIT 10"
 );
 const insertScore = db.prepare(
   "INSERT INTO scores (name, score, mode, duration) VALUES (@name, @score, @mode, @duration)"
 );
+const deleteScore = db.prepare("DELETE FROM scores WHERE id = ?");
 
 const getMultiScores = db.prepare(
-  "SELECT name, score, result, mode, duration FROM multi_scores ORDER BY score DESC LIMIT 10"
+  "SELECT id, name, score, result, mode, duration FROM multi_scores ORDER BY score DESC LIMIT 10"
 );
 const insertMultiScore = db.prepare(
   "INSERT INTO multi_scores (name, score, result, mode, duration) VALUES (@name, @score, @result, @mode, @duration)"
 );
+const deleteMultiScore = db.prepare("DELETE FROM multi_scores WHERE id = ?");
 
 app.get("/healthz", (_req, res) => {
   res.json({ status: "ok" });
@@ -126,6 +130,26 @@ app.post("/api/multi-scores", (req, res) => {
   const validResult = ["win", "lose", "draw"].includes(result) ? result : "lose";
   const validDuration = Number.isInteger(duration) && duration >= 0 ? duration : 0;
   insertMultiScore.run({ name: name.trim(), score, result: validResult, mode: validMode, duration: validDuration });
+  res.json({ ok: true });
+});
+
+function checkAdmin(req, res) {
+  const key = req.headers["x-admin-key"] || req.query.key;
+  if (!ADMIN_KEY) return true;
+  if (key === ADMIN_KEY) return true;
+  res.status(403).json({ error: "Invalid admin key" });
+  return false;
+}
+
+app.delete("/api/scores/:id", (req, res) => {
+  if (!checkAdmin(req, res)) return;
+  deleteScore.run(req.params.id);
+  res.json({ ok: true });
+});
+
+app.delete("/api/multi-scores/:id", (req, res) => {
+  if (!checkAdmin(req, res)) return;
+  deleteMultiScore.run(req.params.id);
   res.json({ ok: true });
 });
 
