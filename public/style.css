@@ -293,6 +293,12 @@ canvas.star-active {
   animation: starBorder 0.5s linear infinite;
 }
 
+/* === MUTE === */
+#mute-btn {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
 /* === PAUSE === */
 #pause-btn {
   font-size: 0.7rem;

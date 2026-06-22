@@ -66,7 +66,22 @@
   mode = "easy";
 
   let sfxCtx = null;
+  let muted = localStorage.getItem("snakeMuted") === "true";
+  const muteBtn = document.getElementById("mute-btn");
+  function updateMuteBtn() {
+    muteBtn.textContent = muted ? "🔇" : "🔊";
+  }
+  updateMuteBtn();
+  muteBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    muted = !muted;
+    localStorage.setItem("snakeMuted", muted);
+    updateMuteBtn();
+    if (muted && starActive) stopStarMusic();
+  });
+
   function getSfxCtx() {
+    if (muted) return null;
     if (!sfxCtx || sfxCtx.state === "closed") {
       try { sfxCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch { return null; }
     }
@@ -357,7 +372,7 @@
     ];
 
     const gainNode = ctx.createGain();
-    gainNode.gain.value = 0.08;
+    gainNode.gain.value = 0.18;
     gainNode.connect(ctx.destination);
 
     const totalDuration = melody.length * noteLen;
@@ -371,7 +386,7 @@
         osc.frequency.value = freq;
 
         const env = ctx.createGain();
-        env.gain.setValueAtTime(0.08, t);
+        env.gain.setValueAtTime(0.18, t);
         env.gain.exponentialRampToValueAtTime(0.01, t + noteLen * 0.9);
 
         osc.connect(env);
