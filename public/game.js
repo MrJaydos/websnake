@@ -34,6 +34,7 @@
 
   let CELL;
   let snake, dir, nextDir, food, score, gameLoop, running, mode, startTime, gameDuration, fruitsEaten;
+  const dirQueue = [];
   let superFruit = null;
   let superFruitTimer = null;
   let superFruitSpawnedAt = 0;
@@ -308,6 +309,7 @@
     ];
     dir = { x: 1, y: 0 };
     nextDir = { x: 1, y: 0 };
+    dirQueue.length = 0;
     score = 0;
     scoreEl.textContent = "0";
     clearSuperFruit();
@@ -652,6 +654,9 @@
   }
 
   function tick() {
+    if (dirQueue.length > 0) {
+      nextDir = dirQueue.shift();
+    }
     dir = nextDir;
     const head = {
       x: snake[0].x + dir.x,
@@ -976,6 +981,13 @@
     d: { x: 1, y: 0 },
   };
 
+  function queueDir(newDir) {
+    const ref = dirQueue.length > 0 ? dirQueue[dirQueue.length - 1] : nextDir;
+    if (newDir.x + ref.x === 0 && newDir.y + ref.y === 0) return;
+    if (newDir.x === ref.x && newDir.y === ref.y) return;
+    if (dirQueue.length < 2) dirQueue.push(newDir);
+  }
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" || e.key === " ") {
       if (running) {
@@ -986,8 +998,7 @@
     }
     const newDir = KEY_MAP[e.key];
     if (!newDir || !running || paused) return;
-    if (newDir.x + dir.x === 0 && newDir.y + dir.y === 0) return;
-    nextDir = newDir;
+    queueDir(newDir);
     e.preventDefault();
   });
 
@@ -1010,9 +1021,7 @@
     } else {
       newDir = dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 };
     }
-    if (newDir.x + dir.x !== 0 || newDir.y + dir.y !== 0) {
-      nextDir = newDir;
-    }
+    queueDir(newDir);
     touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   }, { passive: false });
 
@@ -1034,13 +1043,15 @@
       e.stopPropagation();
       const newDir = DPAD_MAP[btn.dataset.dir];
       if (!newDir || !running || paused) return;
-      if (newDir.x + dir.x === 0 && newDir.y + dir.y === 0) return;
-      nextDir = newDir;
+      queueDir(newDir);
       vibrate();
       btn.classList.add("pressed");
       setTimeout(() => btn.classList.remove("pressed"), 100);
     }
-    btn.addEventListener("pointerdown", handlePress, { passive: false });
+    btn.addEventListener("touchstart", handlePress, { passive: false });
+    btn.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "touch") handlePress(e);
+    }, { passive: false });
     btn.addEventListener("contextmenu", (e) => e.preventDefault());
   });
 
